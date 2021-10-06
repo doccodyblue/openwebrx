@@ -79,6 +79,8 @@ class Schedule(ABC):
                 return StaticSchedule(sc["schedule"])
             elif t == "daylight":
                 return DaylightSchedule(sc["schedule"])
+            elif t == "hopping":
+                return HoppingSchedule(sc["schedule"], sc["timeslotlength"])
             else:
                 logger.warning("Invalid scheduler type: %s", t)
         # downwards compatibility
@@ -123,6 +125,50 @@ class StaticSchedule(TimerangeSchedule):
             startTime = datetime.strptime(time[0:4], "%H%M").replace(tzinfo=timezone.utc).time()
             endTime = datetime.strptime(time[5:9], "%H%M").replace(tzinfo=timezone.utc).time()
             self.entries.append(TimeScheduleEntry(startTime, endTime, profile))
+
+    def getEntries(self):
+        return self.entries
+
+
+class HoppingSchedule(TimerangeSchedule):
+    def __init__(self, scheduleDict, timeslot_length=10):
+        self.entries = []
+        hourschedule = [None] * 24
+        lastProfile = ""
+
+        for key, value in scheduleDict.items():
+            hourschedule[int(key)] = value
+
+        # create datetime object and set to 00:00
+        startTime = nullTime = datetime.utcnow().replace(second=0, microsecond=0, minute=0, hour=0)
+
+        for hour in range(0, 24):
+            profileIndex = 0  # reset subprofiles
+            for minute in range(0, 59, timeslot_length):
+                endTime = nullTime + timedelta(hours=hour, minutes=minute)
+                try:
+                    if type(hourschedule[endTime.hour]) is str:
+                        # only one profile for this hour
+                        nextProfile = hourschedule[endTime.hour]
+                    else:
+                        # multiple profiles
+                        l = len(hourschedule[endTime.hour])
+                        nextProfile = hourschedule[endTime.hour][profileIndex]
+                        if profileIndex < l-1:
+                            profileIndex += 1
+                        else:
+                            profileIndex = 0
+
+                except:
+                    # hour has no entry, go on with the last profile
+                    # todo: hop over profiles from last hour instead staying on on profile
+                    nextProfile = lastProfile
+                if not startTime == endTime:
+                    self.entries.append(TimeScheduleEntry(startTime.time(), endTime.time(), nextProfile))
+                    logger.debug("found schedule from %s until %s [%s]", startTime.time(), endTime.time(), nextProfile)
+
+                startTime = endTime
+                lastProfile = nextProfile
 
     def getEntries(self):
         return self.entries
