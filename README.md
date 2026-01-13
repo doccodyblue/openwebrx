@@ -7,7 +7,7 @@ This fork adds the following customizations on top of OpenWebRX+:
 * **NR2 Noise Reduction** - Client-side noise reduction via AudioWorklet with adjustable threshold
 * **DX Cluster Integration** - Live DX spots with waterfall markers showing spotted stations
 * **Rotation Scheduler** - Automatic profile rotation for SDR devices
-* **Bandpass Reset** - Right-click on modulation selector to reset filter to defaults (70-3000 Hz)
+* **Bandpass Reset** - Right-click on USB/LSB buttons to reset filter to defaults (70-3000 Hz)
 
 **Fixes:**
 * LogPipe UTF-8 crash fix for SDR processes
