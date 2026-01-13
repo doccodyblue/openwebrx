@@ -160,6 +160,22 @@ class ClientRegistry(object):
         for c in self.clients:
             c.write_log_message(text)
 
+    # Broadcast DX cluster spot to all connected clients.
+    def broadcastDxSpot(self, spot):
+        for c in self.clients:
+            try:
+                c.write_dxspots([spot])
+            except:
+                pass
+
+    # Broadcast generic message to all connected clients.
+    def broadcastMessage(self, msg):
+        for c in self.clients:
+            try:
+                c.send(msg)
+            except:
+                pass
+
     # Get client IP address from the handler.
     def getIp(self, handler):
         ip = handler.client_address[0]

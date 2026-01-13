@@ -69,6 +69,22 @@ class DatetimeScheduleEntry(ScheduleEntry):
         return self.startTime
 
 
+class RotationScheduleEntry(ScheduleEntry):
+    """Schedule entry for rotation scheduler - activates immediately and ends after interval."""
+    def __init__(self, profile, end_time):
+        now = datetime.utcnow()
+        super().__init__(now, end_time, profile)
+
+    def isCurrent(self, dt):
+        return self.startTime <= dt < self.endTime
+
+    def getScheduledEnd(self):
+        return self.endTime
+
+    def getNextActivation(self):
+        return self.endTime
+
+
 class Schedule(ABC):
     @staticmethod
     def parse(props):
@@ -79,6 +95,8 @@ class Schedule(ABC):
                 return StaticSchedule(sc["schedule"])
             elif t == "daylight":
                 return DaylightSchedule(sc["schedule"])
+            elif t == "rotation":
+                return RotationSchedule(sc["schedule"])
             else:
                 logger.warning("Invalid scheduler type: %s", t)
         # downwards compatibility
@@ -203,6 +221,48 @@ class DaylightSchedule(TimerangeSchedule):
 
         logger.debug([str(e) for e in entries])
         return entries
+
+
+class RotationSchedule(Schedule):
+    """Scheduler that rotates through selected profiles at a fixed interval."""
+    def __init__(self, scheduleDict):
+        # scheduleDict kann PropertyLayer sein, daher direkter Zugriff
+        self.profiles = scheduleDict["profiles"] if "profiles" in scheduleDict else []
+        self.interval = (scheduleDict["interval"] if "interval" in scheduleDict else 5) * 60  # Convert minutes to seconds
+        self.current_index = 0
+        self.current_end_time = None  # Track when current profile expires
+        logger.info("RotationSchedule initialized with profiles: %s, interval: %d sec", self.profiles, self.interval)
+
+    def getCurrentEntry(self):
+        if not self.profiles:
+            return None
+        
+        now = datetime.utcnow()
+        
+        # Check if we need to advance to next profile (current one expired)
+        if self.current_end_time is not None and now >= self.current_end_time:
+            self.current_index = (self.current_index + 1) % len(self.profiles)
+            self.current_end_time = None  # Will be set below
+            logger.info("RotationSchedule: interval expired, advancing to index %d", self.current_index)
+        
+        # Set end time if not set (first call or after advancing)
+        if self.current_end_time is None:
+            self.current_end_time = now + timedelta(seconds=self.interval)
+            logger.info("RotationSchedule: selected profile %s (index %d), ends at %s", 
+                       self.profiles[self.current_index], self.current_index, self.current_end_time)
+        
+        profile = self.profiles[self.current_index]
+        return RotationScheduleEntry(profile, self.current_end_time)
+
+    def getNextEntry(self):
+        if not self.profiles:
+            return None
+        # For rotation, next entry is always available (we rotate continuously)
+        # Return an entry for the next profile
+        next_index = (self.current_index + 1) % len(self.profiles)
+        next_start = self.current_end_time if self.current_end_time else datetime.utcnow()
+        next_end = next_start + timedelta(seconds=self.interval)
+        return RotationScheduleEntry(self.profiles[next_index], next_end)
 
 
 class ServiceScheduler(SdrSourceEventClient):

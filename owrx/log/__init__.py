@@ -12,7 +12,7 @@ class LogPipe(threading.Thread):
         self.logger = logger
         self.prefix = prefix
         self.fdRead, self.fdWrite = os.pipe()
-        self.pipeReader = os.fdopen(self.fdRead)
+        self.pipeReader = os.fdopen(self.fdRead, errors='replace')  # Fix: handle invalid UTF-8 from SDR
         self.start()
 
     def fileno(self):

@@ -195,7 +195,7 @@ class ServiceHandler(SdrSourceEventClient):
     def get_bandwidth(self, group):
         minFreq, maxFreq = self.get_min_max(group)
         # minimum bandwidth for a resampler: 25kHz
-        return max((maxFreq - minFreq) * 1.15, 25000)
+        return max((maxFreq - minFreq) * 1.15, 48000)  # Fixed: was 25000, PacketDemod needs 48kHz
 
     def optimizeResampling(self, freqs, bandwidth):
         freqs = sorted(freqs, key=lambda f: f["frequency"])
@@ -363,6 +363,12 @@ class ServiceHandler(SdrSourceEventClient):
         elif mod == "uat":
             from csdr.chain.aircraft import UatDemodulator
             return UatDemodulator(service=True)
+        elif mod == "rs41":
+            from csdr.chain.radiosonde import Rs41Demodulator
+            return Rs41Demodulator(service=True)
+        elif mod == "dfm":
+            from csdr.chain.radiosonde import Dfm09Demodulator
+            return Dfm09Demodulator(service=True)
         elif mod == "audio":
             from csdr.chain.toolbox import AudioRecorder
             return AudioRecorder(service=True)
@@ -372,21 +378,6 @@ class ServiceHandler(SdrSourceEventClient):
         elif mod == "rttyskimmer":
             from csdr.chain.toolbox import RttySkimmerDemodulator
             return RttySkimmerDemodulator(service=True)
-        elif mod == "sonde-rs41":
-            from csdr.chain.sonde import Rs41Demodulator
-            return Rs41Demodulator(service=True)
-        elif mod == "sonde-dfm9":
-            from csdr.chain.sonde import Dfm9Demodulator
-            return Dfm9Demodulator(service=True)
-        elif mod == "sonde-dfm17":
-            from csdr.chain.sonde import Dfm17Demodulator
-            return Dfm17Demodulator(service=True)
-        elif mod == "sonde-m10":
-            from csdr.chain.sonde import M10Demodulator
-            return M10Demodulator(service=True)
-        elif mod == "sonde-m20":
-            from csdr.chain.sonde import M20Demodulator
-            return M20Demodulator(service=True)
         elif mod == "meteor-lrpt":
             from csdr.chain.satellite import MeteorLrptDemodulator
             return MeteorLrptDemodulator(service=True)

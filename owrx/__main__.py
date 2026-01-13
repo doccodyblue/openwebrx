@@ -134,7 +134,7 @@ Support and info:       https://groups.io/g/openwebrx
     Config.validateConfig()
 
     # Check for WiFi connection and become hotspot if none
-    WiFi.getSharedInstance().startConnectionCheck(30)
+    WiFi.getSharedInstance().startConnectionCheck()
 
     featureDetector = FeatureDetector()
     failed = featureDetector.get_failed_requirements("core")
@@ -182,6 +182,30 @@ Support and info:       https://groups.io/g/openwebrx
             logger.info("To enable https://, supply SSL certificate:")
             logger.info("    " + certFile)
             logger.info("    " + keyFile)
+        # Start DX Cluster (if configured)
+        try:
+            pm = Config.get()
+            if pm["dxcluster_enabled"]:
+                from owrx.dxcluster import DXClusterClient
+                host_port = pm["dxcluster_host"]
+                if ":" in host_port:
+                    host, port = host_port.rsplit(":", 1)
+                    port = int(port)
+                else:
+                    host, port = host_port, 7300
+                callsign = pm["dxcluster_callsign"]
+                try:
+                    login_script = pm["dxcluster_login_script"]
+                except KeyError:
+                    login_script = None
+                dxc = DXClusterClient.getSharedInstance()
+                dxc.start(host, port, callsign, login_script)
+                logger.info(f"DX Cluster started: {host}:{port} as {callsign}")
+        except KeyError:
+            pass  # Not configured yet
+        except Exception as e:
+            logger.warning(f"DX Cluster not started: {e}")
+
         # Run the server
         logger.info("Ready to serve requests.")
         server.serve_forever()

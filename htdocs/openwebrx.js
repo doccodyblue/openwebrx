@@ -40,6 +40,7 @@ var scanner = null;
 var bookmarks = null;
 var audioEngine = null;
 var wf_data = null;
+var wf_raw_data = null;  // Fresh FFT data (not peak-hold)
 var battery_shown = false;
 
 function zoomInOneStep() {
@@ -129,9 +130,18 @@ function setSmeterRelativeValue(value) {
         // yellow
         $bar.css({background: 'linear-gradient(to top, #fff720 , #a49f00)'});
     } else {
-        // red
+        // green
         $bar.css({background: 'linear-gradient(to top, #22ff2f , #008908)'});
     }
+}
+
+function setSmeterPeakPosition(value) {
+    if (value < 0) value = 0;
+    if (value > 1.0) value = 1.0;
+    var $meter = $("#openwebrx-smeter");
+    var $peak = $meter.find(".openwebrx-smeter-peak");
+    var meterWidth = $meter.width();
+    $peak.css({transform: 'translateX(' + (value * (meterWidth - 3)) + 'px)'});
 }
 
 function setSquelchSliderBackground(val) {
@@ -786,6 +796,67 @@ var zoom_center_rel = 0;
 var zoom_center_where = 0;
 
 var smeter_level = 0;
+var smeter_peak = 0;
+var smeter_peak_hold_time = 500; // ms to hold peak before decay
+var smeter_decay_rate = 0.85;    // decay multiplier per update
+var smeter_last_peak_time = 0;
+var smeter_noise_floor = -100;   // auto-tracked noise floor (in dB)
+var smeter_noise_alpha = 0.995;  // slow tracking (0.99 = very slow, 0.9 = fast)
+
+// Calculate noise floor from FFT data, excluding the current signal
+function calculateNoiseFloorFromFFT() {
+    // Use fresh FFT data, not peak-hold version
+    if (!wf_raw_data || wf_raw_data.length === 0) return null;
+
+    var demod = UI.getDemodulator();
+    if (!demod) return null;
+
+    var offsetFreq = demod.get_offset_frequency();
+    // For modes without bandpass (FM, DAB), use wider exclusion zone
+    var lowCut = demod.low_cut;
+    var highCut = demod.high_cut;
+
+    // Determine exclusion zone based on mode
+    var mode = demod.get_modulation();
+
+    // Wideband modes (DAB, DRM, WFM) fill most of the spectrum
+    // Use fixed noise floor reference instead of FFT calculation
+    if (mode === 'wfm' || mode === 'drm' || mode === 'dab') {
+        return -115;  // Fixed reference for wideband modes
+    }
+
+    if (lowCut === null || highCut === null) {
+        // NFM, AM etc
+        lowCut = -8000;
+        highCut = 8000;
+    }
+
+    // Calculate bin indices for signal (to exclude)
+    var binSize = bandwidth / wf_raw_data.length;
+    var signalLowBin = Math.floor((offsetFreq + lowCut + bandwidth/2) / binSize);
+    var signalHighBin = Math.ceil((offsetFreq + highCut + bandwidth/2) / binSize);
+
+    // Extra margin around signal (10 kHz)
+    var marginBins = Math.ceil(10000 / binSize);
+    signalLowBin = Math.max(0, signalLowBin - marginBins);
+    signalHighBin = Math.min(wf_raw_data.length - 1, signalHighBin + marginBins);
+
+    // Collect all values outside the signal
+    var noiseValues = [];
+    for (var i = 0; i < wf_raw_data.length; i++) {
+        if (i < signalLowBin || i > signalHighBin) {
+            noiseValues.push(wf_raw_data[i]);
+        }
+    }
+
+    // Need enough samples for reliable estimate
+    // If signal fills most of spectrum, use fixed reference
+    if (noiseValues.length < 50) return -115;
+
+    // Use 25th percentile as stable noise floor estimate
+    noiseValues.sort(function(a, b) { return a - b; });
+    return noiseValues[Math.floor(noiseValues.length * 0.25)];
+}
 
 function mkzoomlevels() {
     zoom_levels = [1];
@@ -981,10 +1052,6 @@ function on_ws_recv(evt) {
                             Utils.setVesselUrl(config['vessel_url']);
                         }
 
-                        if ('sonde_url' in config) {
-                            Utils.setSondeUrl(config['sonde_url']);
-                        }
-
                         // Load user interface settings from local storage
                         UI.loadSettings();
                         Chat.loadSettings();
@@ -1005,7 +1072,35 @@ function on_ws_recv(evt) {
                         break;
                     case "smeter":
                         smeter_level = json['value'];
-                        setSmeterAbsoluteValue(smeter_level);
+                        var now = Date.now();
+                        // Update peak if new value is higher
+                        if (smeter_level >= smeter_peak) {
+                            smeter_peak = smeter_level;
+                            smeter_last_peak_time = now;
+                        } else if (now - smeter_last_peak_time > smeter_peak_hold_time) {
+                            // Decay peak after hold time
+                            smeter_peak = smeter_peak * smeter_decay_rate + smeter_level * (1 - smeter_decay_rate);
+                        }
+                        // Display current value on bar, peak on marker
+                        var logLevel = getLogSmeterValue(smeter_level);
+                        var logPeak = getLogSmeterValue(smeter_peak);
+
+                        // Get noise floor from FFT (excludes current signal)
+                        var fftNoiseFloor = calculateNoiseFloorFromFFT();
+                        if (fftNoiseFloor !== null) {
+                            // Smooth transition to new noise floor
+                            smeter_noise_floor = smeter_noise_floor * 0.9 + fftNoiseFloor * 0.1;
+                        }
+
+                        // S-meter: 0% at noise floor, 100% at noise floor + 50dB
+                        var smeterRange = 50;
+                        var percentLevel = (logLevel - smeter_noise_floor) / smeterRange;
+                        var percentPeak = (logPeak - smeter_noise_floor) / smeterRange;
+
+                        setSquelchSliderBackground(logLevel);
+                        setSmeterRelativeValue(percentLevel);
+                        setSmeterPeakPosition(percentPeak);
+                        $("#openwebrx-smeter-db").html(logPeak.toFixed(1) + " dB");
                         break;
                     case "cpuusage":
                         $('#openwebrx-bar-server-cpu').progressbar().setUsage(json['value']);
@@ -1066,6 +1161,21 @@ function on_ws_recv(evt) {
                     case "bookmarks":
                         bookmarks.replace_bookmarks(json['value'], "server");
                         break;
+                    case "dxspots":
+                        if (typeof dxCluster !== "undefined" && dxCluster) {
+                            json["value"].forEach(function(spot) {
+                                dxCluster.addSpotFromServer(spot);
+                            });
+                        }
+                        break;
+                    case "dxcluster_status":
+                        var connected = json["value"]["connected"];
+                        var $indicator = $('#dxcluster-status');
+                        if ($indicator.length) {
+                            $indicator.toggleClass('connected', connected);
+                            $indicator.attr('title', connected ? 'DX Cluster connected' : 'DX Cluster disconnected');
+                        }
+                        break;
                     case "sdr_error":
                         divlog(json['value'], true);
                         var $overlay = $('#openwebrx-error-overlay');
@@ -1078,7 +1188,7 @@ function on_ws_recv(evt) {
                         break;
                     case 'secondary_demod':
                         var value = json['value'];
-                        var panels = ['wsjt', 'packet', 'pocsag', 'page', 'sstv', 'fax', 'ism', 'hfdl', 'adsb', 'dsc', 'cwskimmer'].map(function(id) {
+                        var panels = ['wsjt', 'packet', 'pocsag', 'page', 'sstv', 'fax', 'ism', 'hfdl', 'adsb', 'dsc', 'cwskimmer', 'radiosonde'].map(function(id) {
                             return $('#openwebrx-panel-' + id + '-message')[id + 'MessagePanel']();
                         });
                         panels.push($('#openwebrx-panel-js8-message').js8());
@@ -1353,6 +1463,9 @@ function waterfall_init() {
 function waterfall_add(data) {
     if (!waterfall_setup_done) return;
     var w = fft_size;
+
+    // Store fresh FFT data for S-meter noise floor calculation
+    wf_raw_data = data;
 
     // measure waterfall min/max levels, if necessary
     Waterfall.measureRange(data);

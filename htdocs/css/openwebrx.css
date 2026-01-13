@@ -755,6 +755,7 @@ img.openwebrx-mirror-img
 }
 
 #openwebrx-smeter {
+	position: relative;
 	border-color: #888;
 	border-style: solid;
 	border-width: 0px;
@@ -777,6 +778,19 @@ img.openwebrx-mirror-img
 	margin: 0;
 	padding: 0;
 	border-radius: 3px;
+}
+
+.openwebrx-smeter-peak {
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 3px;
+	height: 100%;
+	background: #00ffff;
+	box-shadow: 0 0 4px #00ffff;
+	transform: translateX(0);
+	transition: transform 0.1s linear;
+	border-radius: 1px;
 }
 
 #openwebrx-clock-utc
@@ -1617,11 +1631,6 @@ img.openwebrx-mirror-img
 #openwebrx-panel-digimodes[data-mode="dsc"]     #openwebrx-digimode-content-container,
 #openwebrx-panel-digimodes[data-mode="cwskimmer"]   #openwebrx-digimode-content-container,
 #openwebrx-panel-digimodes[data-mode="rttyskimmer"] #openwebrx-digimode-content-container,
-#openwebrx-panel-digimodes[data-mode="sonde-rs41"]  #openwebrx-digimode-content-container,
-#openwebrx-panel-digimodes[data-mode="sonde-m10"]   #openwebrx-digimode-content-container,
-#openwebrx-panel-digimodes[data-mode="sonde-m20"]   #openwebrx-digimode-content-container,
-#openwebrx-panel-digimodes[data-mode="sonde-dfm9"]  #openwebrx-digimode-content-container,
-#openwebrx-panel-digimodes[data-mode="sonde-dfm17"] #openwebrx-digimode-content-container,
 #openwebrx-panel-digimodes[data-mode="ft8"]     #openwebrx-digimode-select-channel,
 #openwebrx-panel-digimodes[data-mode="wspr"]    #openwebrx-digimode-select-channel,
 #openwebrx-panel-digimodes[data-mode="jt65"]    #openwebrx-digimode-select-channel,
@@ -1649,12 +1658,7 @@ img.openwebrx-mirror-img
 #openwebrx-panel-digimodes[data-mode="zvei"]    #openwebrx-digimode-select-channel,
 #openwebrx-panel-digimodes[data-mode="eas"]     #openwebrx-digimode-select-channel,
 #openwebrx-panel-digimodes[data-mode="cwskimmer"]   #openwebrx-digimode-select-channel,
-#openwebrx-panel-digimodes[data-mode="rttyskimmer"] #openwebrx-digimode-select-channel,
-#openwebrx-panel-digimodes[data-mode="sonde-rs41"]  #openwebrx-digimode-select-channel,
-#openwebrx-panel-digimodes[data-mode="sonde-m10"]   #openwebrx-digimode-select-channel,
-#openwebrx-panel-digimodes[data-mode="sonde-m20"]   #openwebrx-digimode-select-channel,
-#openwebrx-panel-digimodes[data-mode="sonde-dfm9"]  #openwebrx-digimode-select-channel,
-#openwebrx-panel-digimodes[data-mode="sonde-dfm17"] #openwebrx-digimode-select-channel
+#openwebrx-panel-digimodes[data-mode="rttyskimmer"] #openwebrx-digimode-select-channel
 {
     display: none;
 }
@@ -1684,12 +1688,7 @@ img.openwebrx-mirror-img
 #openwebrx-panel-digimodes[data-mode="wmbus"]   #openwebrx-digimode-canvas-container,
 #openwebrx-panel-digimodes[data-mode="dsc"]     #openwebrx-digimode-canvas-container,
 #openwebrx-panel-digimodes[data-mode="cwskimmer"]   #openwebrx-digimode-canvas-container,
-#openwebrx-panel-digimodes[data-mode="rttyskimmer"] #openwebrx-digimode-canvas-container,
-#openwebrx-panel-digimodes[data-mode="sonde-rs41"]  #openwebrx-digimode-canvas-container,
-#openwebrx-panel-digimodes[data-mode="sonde-m10"]   #openwebrx-digimode-canvas-container,
-#openwebrx-panel-digimodes[data-mode="sonde-m20"]   #openwebrx-digimode-canvas-container,
-#openwebrx-panel-digimodes[data-mode="sonde-dfm9"]  #openwebrx-digimode-canvas-container,
-#openwebrx-panel-digimodes[data-mode="sonde-dfm17"] #openwebrx-digimode-canvas-container
+#openwebrx-panel-digimodes[data-mode="rttyskimmer"] #openwebrx-digimode-canvas-container
 {
     height: 200px;
     margin: -10px;
@@ -2087,3 +2086,105 @@ img.openwebrx-mirror-img
     max-height: 0;
 }
 
+
+/* Radiosonde message panel */
+#openwebrx-panel-radiosonde-message {
+    height: 220px;
+}
+
+#openwebrx-panel-radiosonde-message a {
+    color: inherit;
+}
+
+#openwebrx-panel-radiosonde-message tbody {
+    height: 190px;
+}
+
+#openwebrx-panel-radiosonde-message .time {
+    width: 70px;
+    text-align: center;
+}
+
+#openwebrx-panel-radiosonde-message .id {
+    width: 100px;
+    text-align: left;
+}
+
+#openwebrx-panel-radiosonde-message .type {
+    width: 50px;
+    text-align: center;
+}
+
+#openwebrx-panel-radiosonde-message .altitude {
+    width: 70px;
+    text-align: right;
+}
+
+#openwebrx-panel-radiosonde-message .climb {
+    width: 80px;
+    text-align: right;
+}
+
+#openwebrx-panel-radiosonde-message .temp {
+    width: 60px;
+    text-align: right;
+}
+
+#openwebrx-panel-radiosonde-message .locator {
+    width: 150px;
+    text-align: left;
+}
+
+/* Climb rate colors */
+#openwebrx-panel-radiosonde-message .sonde-rising {
+    color: #00cc00;
+}
+
+#openwebrx-panel-radiosonde-message .sonde-falling {
+    color: #ffcc00;
+}
+
+#openwebrx-panel-radiosonde-message .sonde-falling-fast {
+    color: #ff3300;
+}
+
+/* DX Cluster spots - red/orange markers */
+#openwebrx-bookmarks-container .bookmark[data-source=dxcluster] {
+    background-color: #FF6B35;
+    z-index: 5;
+    max-width: none;
+}
+
+#openwebrx-bookmarks-container .bookmark[data-source=dxcluster]:after {
+    border-top-color: #FF6B35;
+}
+
+#openwebrx-bookmarks-container .bookmark[data-source=dxcluster]:hover {
+    background-color: #FF8C5A;
+}
+
+/* DX Cluster connection status indicator */
+#dxcluster-status {
+    position: absolute;
+    left: 8px;
+    top: 8px;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background-color: #666;
+    border: 1px solid #333;
+    z-index: 10;
+    cursor: help;
+    transition: background-color 0.3s;
+}
+
+#dxcluster-status.connected {
+    background-color: #4CAF50;
+    box-shadow: 0 0 5px #4CAF50;
+}
+
+/* NR button active state */
+.openwebrx-nr-toggle.active {
+    background: #4CAF50 !important;
+    box-shadow: 0 0 8px #4CAF50;
+}

@@ -198,6 +198,15 @@ class OpenWebRxReceiverClient(OpenWebRxClient, SdrSourceEventClient):
 
         CpuUsageThread.getSharedInstance().add_client(self)
 
+        # Send initial DX cluster connection status
+        try:
+            from owrx.dxcluster import DXClusterClient
+            dxc = DXClusterClient.getSharedInstance()
+            if dxc.is_running():
+                self.send({"type": "dxcluster_status", "value": {"connected": dxc.is_connected()}})
+        except:
+            pass
+
     def setupStack(self):
         stack = PropertyStack()
         # stack layer 0 reserved for sdr properties
@@ -527,6 +536,9 @@ class OpenWebRxReceiverClient(OpenWebRxClient, SdrSourceEventClient):
 
     def write_bookmarks(self, bookmarks):
         self.send({"type": "bookmarks", "value": bookmarks})
+
+    def write_dxspots(self, spots):
+        self.send({"type": "dxspots", "value": spots})
 
     def write_bands(self, bands):
         self.send({"type": "bands", "value": bands})

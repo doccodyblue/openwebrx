@@ -293,24 +293,26 @@ UI.setNR = function(x) {
 // Toggle noise reduction function.
 UI.toggleNR = function(on) {
     var $nrPanel = $('#openwebrx-panel-nr');
+    var $nrButton = $('.openwebrx-nr-toggle');
 
     // If no argument given, toggle NR
     this.nrEnabled = !!(typeof(on)==='undefined'? $nrPanel.prop('disabled') : on);
 
     LS.save('nr_enabled', this.nrEnabled);
     $nrPanel.prop('disabled', !this.nrEnabled);
+    $nrButton.toggleClass('active', this.nrEnabled);
     this.updateNR();
 }
 
-// Send changed noise reduction parameters to the server.
+// Apply noise reduction on client side (NR2).
 UI.updateNR = function() {
-    ws.send(JSON.stringify({
-        'type': 'connectionproperties',
-        'params': {
-            'nr_enabled': this.nrEnabled,
-            'nr_threshold': this.nrThreshold
-        }
-    }));
+    console.log('UI.updateNR called, nrEnabled:', this.nrEnabled, 'audioEngine:', typeof audioEngine);
+    if (typeof audioEngine !== 'undefined' && audioEngine) {
+        audioEngine.setNR2Enabled(this.nrEnabled);
+        // Map threshold (-20 to +20 dB) to strength (0-100)
+        var strength = Math.max(0, Math.min(100, (this.nrThreshold + 20) * 100 / 40));
+        audioEngine.setNR2Strength(strength);
+    }
 }
 
 //
