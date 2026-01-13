@@ -84,7 +84,7 @@ class RadioIDEnricher(Enricher):
             data = json.loads(res.read().decode("utf-8"))
             if "count" in data and data["count"] > 0 and "results" in data:
                 for item in data["results"]:
-                    if "radio_id" in item and item["radio_id"] == id:
+                    if "id" in item and item["id"] == id:
                         return item
         except json.JSONDecodeError:
             logger.warning("unable to parse radioid response JSON")

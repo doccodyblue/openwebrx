@@ -288,6 +288,57 @@ class SchedulerInput(Input):
             for stage, name in [("day", "Day"), ("night", "Night"), ("greyline", "Greyline")]
         )
 
+    def render_rotation_entries(self, value, errors):
+        # Get selected profiles from value
+        selected_profiles = []
+        interval = 5  # default 5 minutes
+        if value is not None and value and "schedule" in value and "type" in value and value["type"] == "rotation":
+            # PropertyLayer has no .get() method, use in operator instead
+            schedule = value["schedule"]
+            selected_profiles = schedule["profiles"] if "profiles" in schedule else []
+            interval = schedule["interval"] if "interval" in schedule else 5
+
+        # Render checkboxes for each profile
+        profile_checkboxes = "".join(
+            """
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" name="{id}-rotation-profiles" 
+                           id="{id}-rotation-{p_id}" value="{p_id}" {checked}>
+                    <label class="form-check-label" for="{id}-rotation-{p_id}">{name}</label>
+                </div>
+            """.format(
+                id=self.id,
+                p_id=p_id,
+                name=p["name"],
+                checked="checked" if p_id in selected_profiles else "",
+            )
+            for p_id, p in self.profiles.items()
+        )
+
+        return """
+            <div class="row mb-2">
+                <label class="col-form-label col-form-label-sm col-4">Interval (minutes)</label>
+                <div class="col-8">
+                    <input type="number" class="{classes}" id="{id}-rotation-interval" 
+                           name="{id}-rotation-interval" min="1" max="60" value="{interval}" {disabled}>
+                </div>
+            </div>
+            <div class="row">
+                <label class="col-form-label col-form-label-sm col-12">Profiles to rotate:</label>
+            </div>
+            <div class="row">
+                <div class="col-12">
+                    {profile_checkboxes}
+                </div>
+            </div>
+        """.format(
+            id=self.id,
+            classes=self.input_classes(errors),
+            disabled="disabled" if self.disabled else "",
+            interval=interval,
+            profile_checkboxes=profile_checkboxes,
+        )
+
     def render_input(self, value, errors):
         return """
             <div id="{id}">
@@ -297,8 +348,11 @@ class SchedulerInput(Input):
                 <div class="option static container container-fluid" style="display: none;">
                     {entries}
                 </div>
-                <div class="option daylight container container-fluid" style="display: None;">
+                <div class="option daylight container container-fluid" style="display: none;">
                     {stages}
+                </div>
+                <div class="option rotation container container-fluid" style="display: none;">
+                    {rotation}
                 </div>
             </div>
         """.format(
@@ -308,6 +362,7 @@ class SchedulerInput(Input):
             options=self.render_options(value),
             entries=self.render_static_entires(value, errors),
             stages=self.render_daylight_entries(value, errors),
+            rotation=self.render_rotation_entries(value, errors),
         )
 
     def _get_mode(self, value):
@@ -319,6 +374,7 @@ class SchedulerInput(Input):
         options = [
             ("static", "Static scheduler"),
             ("daylight", "Daylight scheduler"),
+            ("rotation", "Rotation scheduler"),
         ]
 
         mode = self._get_mode(value)
@@ -362,6 +418,22 @@ class SchedulerInput(Input):
                 # only apply scheduler if any of the slots are in use
                 if settings_dict:
                     return {self.id: {"type": "daylight", "schedule": settings_dict}}
+            elif data[select_id][0] == "rotation":
+                profiles_key = "{}-rotation-profiles".format(self.id)
+                interval_key = "{}-rotation-interval".format(self.id)
+                profiles = data.get(profiles_key, [])
+                # profiles comes as list of selected profile IDs
+                if isinstance(profiles, str):
+                    profiles = [profiles]
+                interval = 5  # default
+                if interval_key in data:
+                    try:
+                        interval = int(data[interval_key][0])
+                    except (ValueError, IndexError):
+                        interval = 5
+                # only apply if at least one profile is selected
+                if profiles:
+                    return {self.id: {"type": "rotation", "schedule": {"profiles": profiles, "interval": interval}}}
 
         return {}
 

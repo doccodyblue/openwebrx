@@ -2,7 +2,7 @@ from owrx.controllers.settings import SettingsFormController, SettingsBreadcrumb
 from owrx.form.section import Section
 from owrx.form.input.converter import OptionalConverter, IntConverter
 from owrx.form.input.aprs import AprsBeaconSymbols, AprsAntennaDirections
-from owrx.form.input import TextInput, CheckboxInput, DropdownInput, NumberInput, PasswordInput, Option
+from owrx.form.input import TextInput, TextAreaInput, CheckboxInput, DropdownInput, NumberInput, PasswordInput, Option
 from owrx.form.input.validator import AddressAndOptionalPortValidator
 from owrx.breadcrumb import Breadcrumb, BreadcrumbItem
 from owrx.rigcontrol import RigControl
@@ -185,5 +185,31 @@ class ReportingController(SettingsFormController):
                     "Transceiver CI-V address",
                     infotext="Optional transceiver CI-V address (used by Icom)",
                 ),
-            )
+            ),
+            Section(
+                "DX Cluster settings",
+                CheckboxInput(
+                    "dxcluster_enabled",
+                    "Enable DX Cluster spots on waterfall",
+                    infotext="Shows DX spots from a telnet cluster as markers on the waterfall display",
+                ),
+                TextInput(
+                    "dxcluster_host",
+                    "DX Cluster server",
+                    infotext="Telnet address of DX cluster (address:port, e.g. dxc.db0hst.de:7300)",
+                    validator=AddressAndOptionalPortValidator(),
+                ),
+                TextInput(
+                    "dxcluster_callsign",
+                    "Login callsign",
+                    infotext="Your callsign for logging into the DX cluster",
+                ),
+                TextAreaInput(
+                    "dxcluster_login_script",
+                    "Login script",
+                    infotext="Commands to execute after login (one per line). Example: set/filter spotter/eu",
+                    converter=OptionalConverter(),
+                ),
+            ),
+
         ]

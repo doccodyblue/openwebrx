@@ -7,6 +7,7 @@ from owrx.controllers.api import ApiController
 from owrx.controllers.metrics import MetricsController
 from owrx.controllers.file import FilesController, FileController
 from owrx.controllers.clients import ClientController
+from owrx.controllers.clientsjson import ClientsJsonController
 from owrx.controllers.services import ServiceController
 from owrx.controllers.settings import SettingsController
 from owrx.controllers.settings.general import GeneralSettingsController
@@ -94,6 +95,7 @@ class Router(object):
             StaticRoute("/", IndexController),
             StaticRoute("/robots.txt", RobotsController),
             StaticRoute("/status.json", StatusController),
+            StaticRoute("/clients.json", ClientsJsonController),
             RegexRoute("^/static/(.+)$", OwrxAssetsController),
             RegexRoute("^/compiled/(.+)$", CompiledAssetsController),
             RegexRoute("^/aprs-symbols/(.+)$", AprsSymbolsController),

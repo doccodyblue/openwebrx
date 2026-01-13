@@ -96,6 +96,7 @@ class FeatureDetector(object):
         "hfdl": ["dumphfdl"],
         "vdl2": ["dumpvdl2"],
         "acars": ["acarsdec"],
+        "radiosonde": ["rs41mod"],
         "page": ["multimon"],
         "selcall": ["multimon"],
         "eas": ["multimon"],
@@ -107,7 +108,6 @@ class FeatureDetector(object):
         "hdradio": ["nrsc5"],
         "rigcontrol": ["hamlib"],
         "skimmer": ["csdr_skimmer"],
-        "sonde": ["sonde_rs"],
         "mp3": ["lame"],
     }
 
@@ -745,6 +745,14 @@ class FeatureDetector(object):
         """
         return self.command_is_runnable("dumpvdl2 --version")
 
+    def has_rs41mod(self):
+        """
+        OpenWebRX supports decoding Vaisala RS41 and Graw DFM radiosondes using
+        decoders from the [RS project](https://github.com/rs1729/RS). These decoders
+        allow tracking weather balloons and displaying them on the map.
+        """
+        return self.command_is_runnable("rs41mod --help")
+
     def has_redsea(self):
         """
         OpenWebRX uses the [RedSea](https://github.com/windytan/redsea)
@@ -872,14 +880,6 @@ class FeatureDetector(object):
         the `csdr-skimmer` package from the OpenWebRX+ repositories.
         """
         return self.command_is_runnable("csdr-rttyskimmer -h")
-
-    def has_sonde_rs(self):
-        """
-        OpenWebRX uses Zilog decoders in [Project Horus](https://github.com/projecthorus/radiosonde_auto_rx)
-        to decode radiosonde data. This software has to be built and
-        installed manually.
-        """
-        return self.command_is_runnable("rs41mod -h")
 
     def has_lame(self):
         """

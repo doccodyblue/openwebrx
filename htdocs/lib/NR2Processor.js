@@ -190,10 +190,13 @@ class NR2Processor extends AudioWorkletProcessor {
             }
         }
 
+        // Level compensation: +6dB at max NR to compensate for filtered energy loss
+        const makeupGain = 1 + this.amount;  // 1.0 to 2.0 (+0 to +6dB)
+        
         for (let i = 0; i < out.length; i++) {
             if (this.samplesIn > N) {
                 if (this.enabled) {
-                    out[i] = this.outputRing[this.readIdx];
+                    out[i] = this.outputRing[this.readIdx] * makeupGain;
                 } else {
                     out[i] = this.inputRing[(this.readIdx + N) % N2];
                 }

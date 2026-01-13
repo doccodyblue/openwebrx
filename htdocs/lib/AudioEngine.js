@@ -34,6 +34,10 @@ function AudioEngine(maxBufferLength, audioReporter) {
     this.hdRecorder = new AudioRecorder(this.getHdOutputRate(), 128);
     this.recording = false;
     this.lastHd = false;
+
+    // NR2 state
+    this.nr2Enabled = false;
+    this.nr2Strength = 1.0;
 }
 
 AudioEngine.prototype.buildAudioContext = function() {
@@ -101,7 +105,15 @@ AudioEngine.prototype._start = function() {
     me.gainNode.connect(me.audioContext.destination);
 
     if (useAudioWorklets && me.audioContext.audioWorklet) {
-        me.audioContext.audioWorklet.addModule('static/lib/AudioProcessor.js').then(function(){
+        // Load both AudioProcessor and NR2Processor
+        Promise.all([
+            me.audioContext.audioWorklet.addModule('static/lib/AudioProcessor.js'),
+            me.audioContext.audioWorklet.addModule('static/lib/NR2Processor.js?v=1768127306').catch(function(e) {
+                console.warn('NR2Processor not available:', e);
+                return null;
+            })
+        ]).then(function(results) {
+            // Create main audio node
             me.audioNode = new AudioWorkletNode(me.audioContext, 'openwebrx-audio-processor', {
                 numberOfInputs: 0,
                 numberOfOutputs: 1,
@@ -110,7 +122,7 @@ AudioEngine.prototype._start = function() {
                     maxBufferSize: me.maxBufferSize
                 }
             });
-            me.audioNode.connect(me.gainNode);
+
             me.audioNode.port.addEventListener('message', function(m){
                 var json = JSON.parse(m.data);
                 if (typeof(json.buffersize) !== 'undefined') {
@@ -123,6 +135,35 @@ AudioEngine.prototype._start = function() {
                 }
             });
             me.audioNode.port.start();
+
+            // Try to create NR2 node
+            try {
+                me.nr2Node = new AudioWorkletNode(me.audioContext, 'nr2-processor', {
+                    numberOfInputs: 1,
+                    numberOfOutputs: 1,
+                    outputChannelCount: [1],
+                    processorOptions: {
+                        fftSize: 256
+                    }
+                });
+                me.nr2Node.port.start();
+                me.nr2Node.port.postMessage({ enabled: me.nr2Enabled, strength: me.nr2Strength });
+
+
+                // Chain: audioNode -> nr2Node -> gainNode
+                // Workaround: GainNode bridge between AudioWorkletNodes
+                me.nr2Bridge = me.audioContext.createGain();
+                me.nr2Bridge.gain.value = 1.0;
+                me.audioNode.connect(me.nr2Bridge);
+                me.nr2Bridge.connect(me.nr2Node);
+                me.nr2Node.connect(me.gainNode);
+                console.log('NR2 audio processing enabled');
+            } catch (e) {
+                console.warn('Could not create NR2 node:', e);
+                me.nr2Node = null;
+                me.audioNode.connect(me.gainNode);
+            }
+
             runCallbacks('AudioWorklet');
         });
     } else {
@@ -332,6 +373,29 @@ AudioEngine.prototype.getBuffersize = function() {
     // only available when using ScriptProcessorNode
     if (!this.audioBuffers) return 0;
     return this.audioBuffers.map(function(b){ return b.length; }).reduce(function(a, b){ return a + b; }, 0);
+};
+
+// NR2 control methods
+AudioEngine.prototype.setNR2Enabled = function(enabled) {
+    console.log('NR2 setEnabled:', enabled, 'nr2Node:', !!this.nr2Node);
+    this.nr2Enabled = enabled;
+    if (this.nr2Node) {
+        this.nr2Node.port.postMessage({ enabled: enabled });
+    }
+};
+
+AudioEngine.prototype.setNR2Strength = function(strength) {
+    // strength: 0-100 maps to 0-2
+    this.nr2Strength = Math.max(0, Math.min(2, strength / 50));
+    if (this.nr2Node) {
+        this.nr2Node.port.postMessage({ strength: this.nr2Strength });
+    }
+};
+
+AudioEngine.prototype.resetNR2 = function() {
+    if (this.nr2Node) {
+        this.nr2Node.port.postMessage({ reset: true });
+    }
 };
 
 AudioEngine.prototype.startRecording = function() {

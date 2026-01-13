@@ -4,7 +4,7 @@ from owrx.form.input.validator import Range, RangeValidator
 from typing import List
 
 
-class MalahitRrSource(SoapyConnectorSource):
+class MalahitSource(SoapyConnectorSource):
     def getSoapySettingsMappings(self):
         mappings = super().getSoapySettingsMappings()
         mappings.update(
@@ -18,10 +18,10 @@ class MalahitRrSource(SoapyConnectorSource):
         return mappings
 
     def getDriver(self):
-        return "malahitrr"
+        return "malahit-rr"
 
 
-class MalahitRrDeviceDescription(SoapyConnectorDeviceDescription):
+class MalahitDeviceDescription(SoapyConnectorDeviceDescription):
     def getName(self):
         return "Malahit Remote Radio device"
 
