@@ -30,6 +30,11 @@ function DemodulatorPanel(el) {
             self.disableDigiMode();
         }
     });
+    el.on('contextmenu', '.openwebrx-demodulator-button', function(e) {
+        e.preventDefault();
+        UI.resetCurrentBandpass();
+        return false;
+    });
     el.on('change', '.openwebrx-secondary-demod-listbox', function() {
         var value = $(this).val();
         if (value === 'none') {

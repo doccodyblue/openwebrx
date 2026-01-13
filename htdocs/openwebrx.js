@@ -1580,9 +1580,8 @@ function initSliders() {
         UI.toggleScanner();
         return false;
     });
-
-    // Reset bandpass to default by right-clicking on modulation selector
-    $('#modulation').on('contextmenu', function() {
+    // Reset bandpass to default by right-clicking on USB/LSB buttons
+    $(".openwebrx-demodulator-button").on("contextmenu", function() {
         UI.resetCurrentBandpass();
         return false;
     });
