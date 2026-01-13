@@ -1580,6 +1580,12 @@ function initSliders() {
         UI.toggleScanner();
         return false;
     });
+
+    // Reset bandpass to default by right-clicking on modulation selector
+    $('#modulation').on('contextmenu', function() {
+        UI.resetCurrentBandpass();
+        return false;
+    });
 }
 
 function digimodes_init() {

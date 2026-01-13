@@ -251,6 +251,22 @@ UI.resetAllBandpasses = function() {
     this.setFrequency(freq, false);
 };
 
+// Reset current modulation bandpass to default (right-click on modulation)
+UI.resetCurrentBandpass = function() {
+    var modulation = this.getModulation();
+    if (!modulation) return;
+
+    // Delete saved bandpass for current modulation
+    LS.delete('bp-' + modulation);
+
+    // Reset to default from Modes
+    var mode = Modes.findByModulation(modulation);
+    var bp = mode? mode.bandpass : null;
+    if (bp) {
+        this.getDemodulator().setBandpass(bp);
+    }
+};
+
 // Set bandpass for given modulation.
 UI.saveBandpass = function(mode, low, high) {
     // Get current frequency
