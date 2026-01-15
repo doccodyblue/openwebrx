@@ -144,6 +144,23 @@ function setSmeterPeakPosition(value) {
     $peak.css({transform: 'translateX(' + (value * (meterWidth - 3)) + 'px)'});
 }
 
+function setSmeterGateReduction(value) {
+    // value: 0 = no reduction, 1 = full reduction
+    // Display max 50% of S-meter width
+    if (value < 0) value = 0;
+    if (value > 1.0) value = 1.0;
+    var $gate = $("#openwebrx-smeter .openwebrx-smeter-gate");
+    $gate.css({width: (value * 50) + '%'});
+}
+
+function updateSmeterGateFromNR2() {
+    if (typeof audioEngine !== 'undefined' && audioEngine && audioEngine.nr2GateReduction !== undefined) {
+        setSmeterGateReduction(audioEngine.nr2GateReduction);
+    } else {
+        setSmeterGateReduction(0);
+    }
+}
+
 function setSquelchSliderBackground(val) {
     var $slider = $('#openwebrx-panel-receiver .openwebrx-squelch-slider');
     var min = Number($slider.attr('min'));
@@ -1100,6 +1117,7 @@ function on_ws_recv(evt) {
                         setSquelchSliderBackground(logLevel);
                         setSmeterRelativeValue(percentLevel);
                         setSmeterPeakPosition(percentPeak);
+                        updateSmeterGateFromNR2();
                         $("#openwebrx-smeter-db").html(logPeak.toFixed(1) + " dB");
                         break;
                     case "cpuusage":

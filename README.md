@@ -4,7 +4,7 @@ OpenWebRX+ DG7LAN Fork
 This fork adds the following customizations on top of OpenWebRX+:
 
 **Features:**
-* **NR2 Noise Reduction** - Client-side noise reduction via AudioWorklet with adjustable threshold
+* **NR2 Noise Reduction** - Client-side noise reduction via AudioWorklet with adjustable strength, includes VAD-based soft gate for "HiFi SSB" experience
 * **DX Cluster Integration** - Live DX spots with waterfall markers showing spotted stations
 * **Rotation Scheduler** - Automatic profile rotation for SDR devices
 * **Radiosonde Integration** - Weather balloon tracking with RS41 and DFM decoder support
@@ -15,7 +15,8 @@ This fork adds the following customizations on top of OpenWebRX+:
 * LogPipe UTF-8 crash fix for SDR processes
 * NR button green highlight when active
 * Spotter callsign display in DX cluster logs
-* +6dB makeup gain for NR2 at high settings
+* NR2 makeup gain (+9dB) compensation at high settings
+* S-meter shows NR2 gate reduction indicator
 
 ---
 
