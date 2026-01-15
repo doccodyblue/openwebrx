@@ -9,6 +9,7 @@ This fork adds the following customizations on top of OpenWebRX+:
 * **Rotation Scheduler** - Automatic profile rotation for SDR devices
 * **Radiosonde Integration** - Weather balloon tracking with RS41 and DFM decoder support
 * **Bandpass Reset** - Right-click on USB/LSB buttons to reset filter to defaults (70-3000 Hz)
+* **AGC Profile Switching** - Runtime AGC speed control (Slow/Mid/Fast) via S/M/F buttons for USB/LSB/AM/CW modes
 
 **Fixes:**
 * LogPipe UTF-8 crash fix for SDR processes

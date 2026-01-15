@@ -2188,3 +2188,46 @@ img.openwebrx-mirror-img
     background: #4CAF50 !important;
     box-shadow: 0 0 8px #4CAF50;
 }
+
+/* AGC profile buttons */
+.openwebrx-agc-buttons {
+    display: inline-flex;
+    gap: 1px;
+    margin-left: 1px;
+    margin-top: 3px;
+    vertical-align: top;
+}
+
+.openwebrx-agc-btn {
+    width: 21px;
+    height: 21px;
+    padding: 0;
+    margin: 0;
+    border: none;
+    border-radius: 5px;
+    background-color: #373737;
+    background: -webkit-gradient(linear, left top, left bottom, color-stop(0.0, #373737), color-stop(1, #4F4F4F));
+    background: -moz-linear-gradient(center top, #373737 0%, #4F4F4F 100%);
+    background: linear-gradient(to bottom, #373737 0%, #4F4F4F 100%);
+    color: white;
+    font-size: 10px;
+    font-weight: bold;
+    cursor: pointer;
+    user-select: none;
+}
+
+.openwebrx-agc-btn:hover {
+    background: #474747;
+    color: #FFFF50;
+}
+
+.openwebrx-agc-btn:active {
+    background: #777777;
+    color: #FFFF50;
+}
+
+.openwebrx-agc-btn.active {
+    background: #4CAF50;
+    color: #fff;
+    box-shadow: 0 0 5px #4CAF50;
+}

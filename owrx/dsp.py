@@ -11,7 +11,7 @@ from csdr.chain.selector import Selector, SecondarySelector
 from csdr.chain.clientaudio import ClientAudioChain
 from csdr.chain.fft import FftChain
 from csdr.chain.dummy import DummyDemodulator
-from pycsdr.modules import Buffer, Writer
+from pycsdr.modules import Buffer, Writer, Agc
 from pycsdr.types import Format, AgcProfile
 from typing import Union, Optional
 from io import BytesIO
@@ -129,6 +129,20 @@ class ClientDemodulatorChain(Chain):
         self.clientAudioChain.setInputRate(clientRate)
         outputRate = self.hdOutputRate if isinstance(self.demodulator, HdAudio) else self.outputRate
         self.clientAudioChain.setClientRate(outputRate)
+
+    def setAgcProfile(self, profile: str):
+        """Set AGC profile on current SSB demodulator (if applicable)."""
+        if self.demodulator is None:
+            return
+        # Find AGC in the demodulator chain
+        from csdr.chain.analog import Ssb
+        if not isinstance(self.demodulator, Ssb):
+            return
+        agc_idx = self.demodulator.indexOf(lambda x: isinstance(x, Agc))
+        if agc_idx >= 0:
+            agc = self.demodulator.workers[agc_idx]
+            agc.setProfile(AgcProfile(profile))
+            logger.debug("AGC profile set to %s", profile)
 
     def stopDemodulator(self):
         if self.demodulator is None:
@@ -453,6 +467,7 @@ class DspManager(SdrSourceEventClient, ClientDemodulatorSecondaryDspEventClient)
             "audio_service_id": "int",
             "nr_enabled": "bool",
             "nr_threshold": "int",
+            "ssb_agc_profile": RegexValidator(re.compile("^(Slow|Mid|Fast)$")),
         }
         self.localProps = PropertyValidator(PropertyLayer().filter(*validators.keys()), validators)
 
@@ -547,6 +562,7 @@ class DspManager(SdrSourceEventClient, ClientDemodulatorSecondaryDspEventClient)
             self.props.wireProperty("secondary_offset_freq", self.chain.setSecondaryFrequencyOffset),
             self.props.wireProperty("nr_enabled", self.chain.setNrEnabled),
             self.props.wireProperty("nr_threshold", self.chain.setNrThreshold),
+            self.props.wireProperty("ssb_agc_profile", self.chain.setAgcProfile),
         ]
 
         # wire power level output

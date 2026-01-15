@@ -275,7 +275,7 @@
                             <input title="Waterfall minimum level" id="openwebrx-waterfall-color-min" class="openwebrx-panel-slider" type="range" min="-200" max="100" value="50" step="1" onchange="Waterfall.updateColors(0);">
                         </div>
                         <div class="openwebrx-panel-line">
-                            <div title="Noise reduction on/off" class="openwebrx-nr-toggle openwebrx-button openwebrx-slider-button" onclick="UI.toggleNR();">
+                            <div title="Noise reduction on/off (right-click for NR2)" class="openwebrx-nr-toggle openwebrx-button openwebrx-slider-button" onclick="UI.toggleNR();">
                                 <svg viewBox="0 0 80 80"><use xlink:href="static/gfx/svg-defs.svg#noise-reduce"></use></svg>
                             </div>
                             <input title="Noise reduction level" disabled id="openwebrx-panel-nr" class="openwebrx-panel-slider" type="range" min="-20" max="20" value="0" step="1" onchange="UI.setNR(this.value)" oninput="UI.setNR(this.value)">
@@ -283,6 +283,11 @@
                                 <svg viewBox="0 0 80 80"><use xlink:href="static/gfx/svg-defs.svg#waterfall-default"></use></svg>
                             </div>
                             <input title="Waterfall maximum level" id="openwebrx-waterfall-color-max" class="openwebrx-panel-slider" type="range" min="-200" max="100" value="50" step="1" onchange="Waterfall.updateColors(1);">
+                            <div id="openwebrx-agc-buttons" class="openwebrx-agc-buttons" style="display:none;">
+                                <button title="AGC Slow" class="openwebrx-agc-btn" data-profile="Slow" onclick="UI.setAgcProfile('Slow')">S</button>
+                                <button title="AGC Mid" class="openwebrx-agc-btn active" data-profile="Mid" onclick="UI.setAgcProfile('Mid')">M</button>
+                                <button title="AGC Fast" class="openwebrx-agc-btn" data-profile="Fast" onclick="UI.setAgcProfile('Fast')">F</button>
+                            </div>
                         </div>
                     </div>
                     <div id="openwebrx-section-settings" class="openwebrx-section-divider" onclick="UI.toggleSection(this);">&blacktriangle;&nbsp;Settings</div>

@@ -332,6 +332,54 @@ UI.updateNR = function() {
 }
 
 //
+// AGC Profile Controls
+//
+
+// Current AGC profile (Slow, Mid, Fast)
+UI.agcProfile = 'Mid';
+
+// Set AGC profile and send to server.
+UI.setAgcProfile = function(profile) {
+    if (this.agcProfile === profile) return;
+    this.agcProfile = profile;
+
+    // Update button states
+    $('#openwebrx-agc-buttons .openwebrx-agc-btn').removeClass('active');
+    $('#openwebrx-agc-buttons .openwebrx-agc-btn[data-profile="' + profile + '"]').addClass('active');
+
+    // Send to server via dspcontrol
+    if (typeof ws !== 'undefined' && ws) {
+        ws.send(JSON.stringify({
+            "type": "dspcontrol",
+            "params": {"ssb_agc_profile": profile}
+        }));
+    }
+};
+
+// Show or hide AGC buttons based on current modulation.
+UI.updateAgcVisibility = function() {
+    var demod = this.getDemodulator();
+    if (!demod) {
+        $('#openwebrx-agc-buttons').hide();
+        return;
+    }
+    var modulation = demod.get_modulation();
+    console.log('updateAgcVisibility: modulation=' + modulation);
+    // AGC is used for USB, LSB, AM, SAM, CW modes
+    var agcModes = ['usb', 'lsb', 'am', 'sam', 'cw'];
+    var show = agcModes.indexOf(modulation) >= 0;
+    $('#openwebrx-agc-buttons').toggle(show);
+
+    // Re-send current AGC profile when switching to AGC mode
+    if (show && typeof ws !== 'undefined' && ws) {
+        ws.send(JSON.stringify({
+            "type": "dspcontrol",
+            "params": {"ssb_agc_profile": this.agcProfile}
+        }));
+    }
+};
+
+//
 // Audio Recording Controls
 //
 
