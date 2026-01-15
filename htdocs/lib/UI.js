@@ -364,7 +364,6 @@ UI.updateAgcVisibility = function() {
         return;
     }
     var modulation = demod.get_modulation();
-    console.log('updateAgcVisibility: modulation=' + modulation);
     // AGC is used for USB, LSB, AM, SAM, CW modes
     var agcModes = ['usb', 'lsb', 'am', 'sam', 'cw'];
     var show = agcModes.indexOf(modulation) >= 0;

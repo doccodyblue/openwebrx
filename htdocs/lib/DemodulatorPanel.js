@@ -213,7 +213,6 @@ DemodulatorPanel.prototype.updatePanels = function() {
     });
 
     // Update AGC buttons visibility based on modulation
-    console.log('DemodulatorPanel.updatePanels called, modulation=' + modulation);
     UI.updateAgcVisibility();
 };
 
