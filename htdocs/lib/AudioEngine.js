@@ -38,6 +38,7 @@ function AudioEngine(maxBufferLength, audioReporter) {
     // NR2 state
     this.nr2Enabled = false;
     this.nr2Strength = 1.0;
+    this.nr2GateReduction = 0;  // 0-1, for S-meter display
 }
 
 AudioEngine.prototype.buildAudioContext = function() {
@@ -149,6 +150,12 @@ AudioEngine.prototype._start = function() {
                 me.nr2Node.port.start();
                 me.nr2Node.port.postMessage({ enabled: me.nr2Enabled, strength: me.nr2Strength });
 
+                // Receive gate reduction updates for S-meter display
+                me.nr2Node.port.onmessage = function(e) {
+                    if (e.data.gateReduction !== undefined) {
+                        me.nr2GateReduction = e.data.gateReduction;
+                    }
+                };
 
                 // Chain: audioNode -> nr2Node -> gainNode
                 // Workaround: GainNode bridge between AudioWorkletNodes
