@@ -779,11 +779,14 @@ class DspManager(SdrSourceEventClient, ClientDemodulatorSecondaryDspEventClient)
         elif mod == "uat":
             from csdr.chain.aircraft import UatDemodulator
             return UatDemodulator()
-        elif mod == "rs41":
-            from csdr.chain.radiosonde import Rs41Demodulator
+        elif mod == "sonde-mts01":
+            from csdr.chain.sonde import Mts01Demodulator
+            return Mts01Demodulator()
+        elif mod == "sonde-rs41":
+            from csdr.chain.sonde import Rs41Demodulator
             return Rs41Demodulator()
-        elif mod == "dfm":
-            from csdr.chain.radiosonde import Dfm09Demodulator
+        elif mod == "sonde-dfm9" or mod == "sonde-dfm17":
+            from csdr.chain.sonde import Dfm09Demodulator
             return Dfm09Demodulator()
         elif mod == "audio":
             # this should only run as a service though
