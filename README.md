@@ -7,9 +7,9 @@ This fork adds the following customizations on top of OpenWebRX+:
 * **NR2 Noise Reduction** - Client-side noise reduction via AudioWorklet with adjustable strength, includes VAD-based soft gate for "HiFi SSB" experience
 * **DX Cluster Integration** - Live DX spots with waterfall markers showing spotted stations
 * **Rotation Scheduler** - Automatic profile rotation for SDR devices
-* **Radiosonde Integration** - Weather balloon tracking with RS41 and DFM decoder support
 * **Bandpass Reset** - Right-click on USB/LSB buttons to reset filter to defaults (70-3000 Hz)
 * **AGC Profile Switching** - Runtime AGC speed control (Slow/Mid/Fast) via S/M/F buttons for USB/LSB/AM/CW modes
+* **AGC Attack Tuning** - Patched SLOW AGC profile with faster attack to reduce clipping on loud signals
 
 **Fixes:**
 * LogPipe UTF-8 crash fix for SDR processes
