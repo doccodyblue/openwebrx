@@ -389,6 +389,10 @@ AudioEngine.prototype.setNR2Enabled = function(enabled) {
     if (this.nr2Node) {
         this.nr2Node.port.postMessage({ enabled: enabled });
     }
+    // Reset gate reduction display when NR2 is disabled
+    if (!enabled) {
+        this.nr2GateReduction = 0;
+    }
 };
 
 AudioEngine.prototype.setNR2Strength = function(strength) {
@@ -402,6 +406,14 @@ AudioEngine.prototype.setNR2Strength = function(strength) {
 AudioEngine.prototype.resetNR2 = function() {
     if (this.nr2Node) {
         this.nr2Node.port.postMessage({ reset: true });
+    }
+};
+
+AudioEngine.prototype.setNR2Profile = function(profile) {
+    // profile: 'easy' or 'dx'
+    this.nr2Profile = profile;
+    if (this.nr2Node) {
+        this.nr2Node.port.postMessage({ profile: profile });
     }
 };
 

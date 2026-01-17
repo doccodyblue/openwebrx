@@ -275,8 +275,8 @@
                             <input title="Waterfall minimum level" id="openwebrx-waterfall-color-min" class="openwebrx-panel-slider" type="range" min="-200" max="100" value="50" step="1" onchange="Waterfall.updateColors(0);">
                         </div>
                         <div class="openwebrx-panel-line">
-                            <div title="Noise reduction on/off (right-click for NR2)" class="openwebrx-nr-toggle openwebrx-button openwebrx-slider-button" onclick="UI.toggleNR();">
-                                <svg viewBox="0 0 80 80"><use xlink:href="static/gfx/svg-defs.svg#noise-reduce"></use></svg>
+                            <div title="Noise reduction on/off (right-click: toggle NR/DX mode)" class="openwebrx-nr-toggle openwebrx-button openwebrx-slider-button" onclick="UI.toggleNR();" oncontextmenu="UI.toggleNRProfile(); return false;">
+                                <span class="nr-mode-label">NR</span>
                             </div>
                             <input title="Noise reduction level" disabled id="openwebrx-panel-nr" class="openwebrx-panel-slider" type="range" min="-20" max="20" value="0" step="1" onchange="UI.setNR(this.value)" oninput="UI.setNR(this.value)">
                             <div title="Set waterfall colors to default" id="openwebrx-waterfall-colors-default" class="openwebrx-button openwebrx-slider-button" onclick="Waterfall.setDefaultRange();">
@@ -359,6 +359,7 @@
                             <div id="openwebrx-smeter">
                                 <div class="openwebrx-smeter-bar"></div>
                                 <div class="openwebrx-smeter-peak"></div>
+                                <div class="openwebrx-smeter-gate"></div>
                             </div>
                             <div id="openwebrx-clock-utc">00:00 UTC</div>
                             <div id="openwebrx-smeter-db">0 dB</div>

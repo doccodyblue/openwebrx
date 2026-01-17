@@ -36,7 +36,7 @@ UI.loadSettings = function() {
     this.toggleSpectrum(LS.has('ui_spectrum')? LS.loadBool('ui_spectrum') : false);
     this.toggleBandplan(LS.has('ui_bandplan')? LS.loadBool('ui_bandplan') : false);
     this.setWfTheme(LS.has('wf_theme')? LS.loadStr('wf_theme') : 'default');
-    this.setNR(LS.has('nr_threshold')? LS.loadInt('nr_threshold') : 0);
+    this.setNR(LS.has('nr_threshold')? LS.loadInt('nr_threshold') : 14);
     this.toggleNR(LS.has('nr_enabled')? LS.loadBool('nr_enabled') : false);
 
     // Toggle UI sections
@@ -320,6 +320,32 @@ UI.toggleNR = function(on) {
     this.updateNR();
 }
 
+// NR profile: 'easy' (relaxed listening) or 'dx' (aggressive weak signal)
+UI.nrProfile = 'easy';
+
+// Toggle NR profile between easy and DX mode
+UI.toggleNRProfile = function() {
+    this.nrProfile = (this.nrProfile === 'easy') ? 'dx' : 'easy';
+
+    var $nrButton = $('.openwebrx-nr-toggle');
+    var $label = $nrButton.find('.nr-mode-label');
+
+    if (this.nrProfile === 'dx') {
+        $label.text('DX');
+        $nrButton.addClass('dx-mode');
+    } else {
+        $label.text('NR');
+        $nrButton.removeClass('dx-mode');
+    }
+
+    // Send profile to audio engine
+    if (typeof audioEngine !== 'undefined' && audioEngine) {
+        audioEngine.setNR2Profile(this.nrProfile);
+    }
+
+    console.log('NR profile switched to:', this.nrProfile);
+};
+
 // Apply noise reduction on client side (NR2).
 UI.updateNR = function() {
     console.log('UI.updateNR called, nrEnabled:', this.nrEnabled, 'audioEngine:', typeof audioEngine);
@@ -328,6 +354,7 @@ UI.updateNR = function() {
         // Map threshold (-20 to +20 dB) to strength (0-100)
         var strength = Math.max(0, Math.min(100, (this.nrThreshold + 20) * 100 / 40));
         audioEngine.setNR2Strength(strength);
+        audioEngine.setNR2Profile(this.nrProfile);
     }
 }
 

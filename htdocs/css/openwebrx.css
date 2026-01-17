@@ -2207,6 +2207,20 @@ img.openwebrx-mirror-img
     box-shadow: 0 0 8px #4CAF50;
 }
 
+/* NR mode label */
+.nr-mode-label {
+    font-weight: bold;
+    font-size: 11px;
+    color: #fff;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
+}
+
+/* DX mode - orange color */
+.openwebrx-nr-toggle.dx-mode.active {
+    background: #FF9800 !important;
+    box-shadow: 0 0 8px #FF9800;
+}
+
 /* AGC profile buttons */
 .openwebrx-agc-buttons {
     display: inline-flex;

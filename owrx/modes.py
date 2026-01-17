@@ -337,13 +337,14 @@ class Modes(object):
             squelch=False,
             secondaryFft=False
         ),
-        # Radiosonde decoders for weather balloon tracking (upstream sonde system)
+        # Radiosonde decoders for weather balloon tracking
         DigitalMode(
             "sonde-rs41",
             "Sonde RS41",
             underlying=["empty"],
-            bandpass=Bandpass(-6250, 6250),
-            requirements=["sonde"],
+            bandpass=Bandpass(-12000, 12000),
+            ifRate=48000,
+            requirements=["radiosonde"],
             service=True,
             squelch=False
         ),
@@ -351,8 +352,9 @@ class Modes(object):
             "sonde-dfm9",
             "Sonde DFM9",
             underlying=["empty"],
-            bandpass=Bandpass(-6250, 6250),
-            requirements=["sonde"],
+            bandpass=Bandpass(-12000, 12000),
+            ifRate=48000,
+            requirements=["radiosonde"],
             service=True,
             squelch=False
         ),
@@ -360,8 +362,9 @@ class Modes(object):
             "sonde-dfm17",
             "Sonde DFM17",
             underlying=["empty"],
-            bandpass=Bandpass(-6250, 6250),
-            requirements=["sonde"],
+            bandpass=Bandpass(-12000, 12000),
+            ifRate=48000,
+            requirements=["radiosonde"],
             service=True,
             squelch=False
         ),
@@ -369,8 +372,9 @@ class Modes(object):
             "sonde-mts01",
             "Sonde MTS01",
             underlying=["empty"],
-            bandpass=Bandpass(-6250, 6250),
-            requirements=["sonde"],
+            bandpass=Bandpass(-12000, 12000),
+            ifRate=48000,
+            requirements=["radiosonde"],
             service=True,
             squelch=False
         ),
@@ -378,8 +382,9 @@ class Modes(object):
             "sonde-m10",
             "Sonde M10",
             underlying=["empty"],
-            bandpass=Bandpass(-12500, 12500),
-            requirements=["sonde"],
+            bandpass=Bandpass(-25000, 25000),
+            ifRate=76800,
+            requirements=["radiosonde"],
             service=True,
             squelch=False
         ),
@@ -387,8 +392,9 @@ class Modes(object):
             "sonde-m20",
             "Sonde M20",
             underlying=["empty"],
-            bandpass=Bandpass(-12500, 12500),
-            requirements=["sonde"],
+            bandpass=Bandpass(-25000, 25000),
+            ifRate=76800,
+            requirements=["radiosonde"],
             service=True,
             squelch=False
         ),

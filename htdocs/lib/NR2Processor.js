@@ -8,6 +8,7 @@ class NR2Processor extends AudioWorkletProcessor {
         this.hopSize = 128;
         this.enabled = false;
         this.amount = 0;
+        this.profile = 'easy';  // 'easy' or 'dx'
 
         // Buffers
         this.inputRing = new Float32Array(this.fftSize * 2);
@@ -50,8 +51,8 @@ class NR2Processor extends AudioWorkletProcessor {
         this.smoothedFlatness = 0.5;   // Smoothed flatness for decisions
         // Timing @ 48kHz
         this.gateAttack = 0.02;        // Gentler attack (less clicky)
-        this.gateRelease = 0.001;      // Slower release (~400ms)
-        this.holdTime = 8000;          // ~170ms hold
+        this.gateRelease = 0.0001;     // Very slow release (~2s) for soft fade
+        this.holdTime = 19200;         // ~400ms hold before fade starts
         // Crest threshold: below = voice, above = noise
         // Based on tests: noise ~0.4, voice ~0.2-0.3
         this.flatnessThreshold = 0.35;
@@ -73,6 +74,9 @@ class NR2Processor extends AudioWorkletProcessor {
                 this.gateGain = 1.0;
                 this.spectralFlatness = 1.0;
                 this.smoothedFlatness = 0.5;
+            }
+            if (e.data.profile !== undefined) {
+                this.profile = e.data.profile;
             }
         };
     }
@@ -209,6 +213,50 @@ class NR2Processor extends AudioWorkletProcessor {
             }
         }
 
+        // Profile-specific EQ
+        // At 48kHz/512 FFT: bin = freq / 93.75
+        // Bin 1 = ~94Hz, Bin 3 = ~280Hz, Bin 16 = ~1500Hz, Bin 21 = ~2000Hz
+        if (this.profile === 'dx') {
+            // DX mode: Speech clarity boost 300-2000 Hz (+6dB)
+            // Helps understand weak signals
+            const eqLowBin = 3;
+            const eqHighBin = 21;
+            const eqBoost = 2.0;  // +6dB
+            for (let k = eqLowBin; k <= eqHighBin && k < this.numBins; k++) {
+                this.real[k] *= eqBoost;
+                this.imag[k] *= eqBoost;
+                if (k > 0 && k < this.numBins - 1) {
+                    this.real[N - k] *= eqBoost;
+                    this.imag[N - k] *= eqBoost;
+                }
+            }
+        } else {
+            // Easy mode: Warm, smooth sound for relaxed listening
+            // Slight bass boost ~80-200Hz (+3dB)
+            // Slight cut in harsh range 1.5-2kHz (-2dB)
+            for (let k = 1; k < this.numBins; k++) {
+                let eqGain = 1.0;
+                if (k <= 2) {
+                    // Bass boost: bins 1-2 (~94-188Hz)
+                    eqGain = 1.4;  // +3dB
+                } else if (k >= 16 && k <= 21) {
+                    // Cut harsh range: bins 16-21 (~1.5-2kHz)
+                    eqGain = 0.8;  // -2dB
+                } else if (k >= 3 && k <= 8) {
+                    // Slight warmth: bins 3-8 (~280-750Hz)
+                    eqGain = 1.15;  // +1.2dB
+                }
+                if (eqGain !== 1.0) {
+                    this.real[k] *= eqGain;
+                    this.imag[k] *= eqGain;
+                    if (k > 0 && k < this.numBins - 1) {
+                        this.real[N - k] *= eqGain;
+                        this.imag[N - k] *= eqGain;
+                    }
+                }
+            }
+        }
+
         this.fft(this.real, this.imag, true);
 
         const scale = this.hopSize / this.fftSize * 2;
@@ -244,6 +292,23 @@ class NR2Processor extends AudioWorkletProcessor {
             this.smoothedFlatness = 0.98 * this.smoothedFlatness + 0.02 * this.spectralFlatness;
         }
 
+        // Profile-specific parameters
+        // Easy: relaxed listening, keep some background, slow gate, voice EQ
+        // DX: aggressive, faster gate, more attenuation, no EQ boost
+        let holdTime, gateRelease, minGainBase, minGainRange;
+        if (this.profile === 'dx') {
+            holdTime = 7200;           // ~150ms hold (faster)
+            gateRelease = 0.0003;      // ~0.3s release (faster)
+            minGainBase = 0.15;        // More aggressive gate
+            minGainRange = 0.10;       // 0.15 to 0.05
+        } else {
+            // 'easy' profile (default)
+            holdTime = 19200;          // ~400ms hold
+            gateRelease = 0.0001;      // ~2s release (slow fade)
+            minGainBase = 0.40;        // Keep some noise
+            minGainRange = 0.20;       // 0.40 to 0.20
+        }
+
         // VAD decision based on spectral crest
         // Low value = voice (peaky spectrum), high value = noise (flat spectrum)
         const dynamicThreshold = this.flatnessThreshold - this.amount * 0.05;  // 0.35 to 0.30
@@ -251,7 +316,7 @@ class NR2Processor extends AudioWorkletProcessor {
 
         if (voiceDetected) {
             this.gateOpen = true;
-            this.holdCounter = this.holdTime;
+            this.holdCounter = holdTime;
         } else if (this.holdCounter > 0) {
             this.holdCounter -= inp.length;
         } else {
@@ -262,9 +327,9 @@ class NR2Processor extends AudioWorkletProcessor {
         const makeupGain = 1 + this.amount * 1.8;  // 1.0 to 2.8 (+0 to +9dB)
 
         // VAD gate based on spectral crest factor - depth controlled by NR slider
-        const minGain = 0.25 - this.amount * 0.20;  // 0.25 (-12dB) to 0.05 (-26dB) at max NR
+        const minGain = minGainBase - this.amount * minGainRange;
         const gateTarget = this.gateOpen ? 1.0 : minGain;
-        const gateSpeed = this.gateOpen ? this.gateAttack : this.gateRelease;
+        const gateSpeed = this.gateOpen ? this.gateAttack : gateRelease;
 
         for (let i = 0; i < out.length; i++) {
             // Smooth gate gain transition

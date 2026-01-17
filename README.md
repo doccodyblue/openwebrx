@@ -6,6 +6,7 @@ This fork adds the following customizations on top of OpenWebRX+:
 **Features:**
 * **NR2 Noise Reduction** - Client-side noise reduction via AudioWorklet with adjustable strength, includes VAD-based soft gate for "HiFi SSB" experience
 * **DX Cluster Integration** - Live DX spots with waterfall markers showing spotted stations
+* **Radiosonde Decoder** - Custom RS41/DFM decoder chain with AGC and automatic signal finding (more reliable than upstream)
 * **Rotation Scheduler** - Automatic profile rotation for SDR devices
 * **Bandpass Reset** - Right-click on USB/LSB buttons to reset filter to defaults (70-3000 Hz)
 * **AGC Profile Switching** - Runtime AGC speed control (Slow/Mid/Fast) via S/M/F buttons for USB/LSB/AM/CW modes
@@ -17,6 +18,10 @@ This fork adds the following customizations on top of OpenWebRX+:
 * Spotter callsign display in DX cluster logs
 * NR2 makeup gain (+9dB) compensation at high settings
 * S-meter shows NR2 gate reduction indicator
+* Radiosonde panel display for sonde modes
+
+**Note on Radiosonde Support:**
+We use our own radiosonde decoder chain (`csdr.chain.radiosonde`) instead of upstream's (`csdr.chain.sonde`) because the upstream implementation did not decode reliably in our tests. Our chain includes AGC and uses `fsk_demod` for automatic signal finding, making it more robust when not tuned exactly to the sonde frequency.
 
 ---
 

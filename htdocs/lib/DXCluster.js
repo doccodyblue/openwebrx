@@ -67,10 +67,12 @@ DXCluster.prototype.render = function() {
     // Convert to bookmark format
     var dxBookmarks = visibleSpots.map(function(s) {
         var age = (Date.now() - s.time) / 60000; // age in minutes
+        // Below 10 MHz use LSB, above use USB (ham convention)
+        var mode = s.frequency < 10000000 ? 'lsb' : 'usb';
         return {
             name: s.dx_call,
             frequency: s.frequency,
-            modulation: 'usb',
+            modulation: mode,
             description: (s.comment || '') + ' (by ' + s.spotter + ', ' + Math.round(age) + 'm ago)',
             source: 'dxcluster',
             editable: false
