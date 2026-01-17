@@ -2263,3 +2263,36 @@ img.openwebrx-mirror-img
     color: #fff;
     box-shadow: 0 0 5px #4CAF50;
 }
+
+/* Under construction panel for development versions */
+.openwebrx-panel.under-construction {
+    background-color: #ffd914 !important;
+    background: #ffd914 !important;
+    color: #111111 !important;
+    text-align: center;
+}
+
+.openwebrx-panel.under-construction h4 {
+    font-size: 15pt;
+    margin: 0;
+    color: #111111;
+}
+
+.openwebrx-panel.under-construction p {
+    margin: 5px 0;
+    color: #111111;
+}
+
+.openwebrx-panel.under-construction a {
+    color: #0066cc;
+}
+
+.under-construction-description {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height .2s ease-in-out;
+}
+
+.openwebrx-panel.under-construction:hover .under-construction-description {
+    max-height: 500px;
+}
