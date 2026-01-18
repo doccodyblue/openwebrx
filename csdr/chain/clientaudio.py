@@ -15,7 +15,11 @@ class Converter(Chain):
         if inputRate != clientRate:
             workers += [AudioResampler(inputRate, clientRate), Limit(), Convert(Format.FLOAT, Format.SHORT)]
         elif format != Format.SHORT:
-            workers += [Convert(format, Format.SHORT)]
+            # Always add Limit() before converting to SHORT to prevent hard clipping
+            if format == Format.FLOAT:
+                workers += [Limit(), Convert(Format.FLOAT, Format.SHORT)]
+            else:
+                workers += [Convert(format, Format.SHORT)]
         super().__init__(workers)
 
 

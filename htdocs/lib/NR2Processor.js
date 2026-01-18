@@ -50,7 +50,7 @@ class NR2Processor extends AudioWorkletProcessor {
         this.spectralFlatness = 1.0;   // Current spectral flatness (0=peaky/voice, 1=flat/noise)
         this.smoothedFlatness = 0.5;   // Smoothed flatness for decisions
         // Timing @ 48kHz
-        this.gateAttack = 0.02;        // Gentler attack (less clicky)
+        this.gateAttack = 0.00008;     // Slow attack (~250ms rise time)
         this.gateRelease = 0.0001;     // Very slow release (~2s) for soft fade
         this.holdTime = 19200;         // ~400ms hold before fade starts
         // Crest threshold: below = voice, above = noise
@@ -338,7 +338,11 @@ class NR2Processor extends AudioWorkletProcessor {
             if (this.samplesIn > N) {
                 if (this.enabled) {
                     // Apply NR output with makeup gain and soft gate
-                    out[i] = this.outputRing[this.readIdx] * makeupGain * this.gateGain;
+                    let sample = this.outputRing[this.readIdx] * makeupGain * this.gateGain;
+                    // Soft limiter - only engage when approaching clipping
+                    if (sample > 0.9) sample = 0.9 + (sample - 0.9) * 0.3;
+                    else if (sample < -0.9) sample = -0.9 + (sample + 0.9) * 0.3;
+                    out[i] = sample;
                 } else {
                     out[i] = this.inputRing[(this.readIdx + N) % N2];
                 }
