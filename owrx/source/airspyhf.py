@@ -19,6 +19,7 @@ class AirspyhfDeviceDescription(SoapyConnectorDeviceDescription):
     def getSampleRateRanges(self) -> List[Range]:
         return [
             Range(192000),
+            Range(228000),
             Range(256000),
             Range(384000),
             Range(456000),
