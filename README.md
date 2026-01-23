@@ -4,6 +4,7 @@ OpenWebRX+ DG7LAN Fork
 This fork adds the following customizations on top of OpenWebRX+:
 
 **Features:**
+* **SDR Profile Locking** - First user on an SDR becomes "owner" and controls the profile; others can only listen along on the active profile. Prevents users from disrupting each other's reception. Live updates show listener count and ownership status.
 * **NR2 Noise Reduction** - Client-side noise reduction via AudioWorklet with adjustable strength, includes VAD-based soft gate for "HiFi SSB" experience
 * **DX Cluster Integration** - Live DX spots with waterfall markers showing spotted stations
 * **Radiosonde Decoder** - Custom RS41/DFM decoder chain with AGC and automatic signal finding (more reliable than upstream)
@@ -13,6 +14,7 @@ This fork adds the following customizations on top of OpenWebRX+:
 * **AGC Attack Tuning** - Patched SLOW AGC profile with faster attack to reduce clipping on loud signals
 
 **Fixes:**
+* New users receive active SDR profile instead of default (no more "profile hijacking")
 * LogPipe UTF-8 crash fix for SDR processes
 * NR button green highlight when active
 * Spotter callsign display in DX cluster logs
