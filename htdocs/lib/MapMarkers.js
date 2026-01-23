@@ -607,7 +607,10 @@ AprsMarker.prototype.getInfoHTML = function(name, receiverMarker = null) {
     }
 
     if (this.altitude) {
-        detailsString += Utils.makeListItem('Altitude', this.altitude.toFixed(0) + ' m');
+        var vs = '';
+        if (this.vspeed > 0) vs = '&uarr;' + this.vspeed.toFixed(1) + ' m/s ';
+        if (this.vspeed < 0) vs = '&darr;' + (-this.vspeed).toFixed(1) + ' m/s ';
+        detailsString += Utils.makeListItem('Altitude', vs + this.altitude.toFixed(0) + ' m');
     }
 
     if (this.country) {

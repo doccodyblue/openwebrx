@@ -46,9 +46,14 @@ class MalahitDeviceDescription(SoapyConnectorDeviceDescription):
             ),
         ]
 
+    def hasAgc(self):
+        return False
+
     def getDeviceOptionalKeys(self):
         return super().getDeviceOptionalKeys() + ["biasT", "highZ", "lna", "attenuator"]
 
-    def getSampleRateRanges(self) -> List[Range]:
-        return [ Range(744192) ]
+    def getProfileOptionalKeys(self):
+        return super().getProfileOptionalKeys() + ["biasT", "highZ", "lna", "attenuator"]
 
+    def getSampleRateRanges(self) -> List[Range]:
+        return [ Range(650000), Range(744192), Range(912000) ]
