@@ -232,9 +232,10 @@
                             <svg viewBox="0 0 80 80"><use xlink:href="static/gfx/svg-defs.svg#bookmark"></use></svg>
                         </div>
                     </div>
-                    <div class="openwebrx-panel-line">
-                        <select id="openwebrx-sdr-profiles-listbox" onchange="sdr_profile_changed();">
+                    <div class="openwebrx-panel-line" style="display: flex; align-items: center; gap: 8px;">
+                        <select id="openwebrx-sdr-profiles-listbox" onchange="sdr_profile_changed();" style="flex: 1;">
                         </select>
+                        <span id="openwebrx-sdr-users" style="display: none; font-size: 12px; color: #ffa500;" title="Andere Hörer auf diesem SDR"></span>
                     </div>
                     <div id="openwebrx-section-modes" class="openwebrx-section-divider" onclick="UI.toggleSection(this);">&blacktriangledown;&nbsp;Modes</div>
                     <div class="openwebrx-section">

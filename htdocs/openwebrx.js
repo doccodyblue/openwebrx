@@ -43,6 +43,65 @@ var wf_data = null;
 var wf_raw_data = null;  // Fresh FFT data (not peak-hold)
 var battery_shown = false;
 
+// Global: welche SDRs sind belegt (SDR-ID -> User-Count) und welche wir besitzen
+var busySdrs = {};
+var ownedSdrs = [];
+var activeProfiles = {};  // SDR-ID -> aktives Profil (zum "Aufspringen")
+
+function updateSdrUsersLock(newBusySdrs, newOwnedSdrs, newActiveProfiles) {
+    busySdrs = newBusySdrs || {};
+    ownedSdrs = newOwnedSdrs || [];
+    activeProfiles = newActiveProfiles || {};
+    var sdrUsersEl = $('#openwebrx-sdr-users');
+    var listbox = $('#openwebrx-sdr-profiles-listbox');
+    var currentVal = listbox.val();
+    var currentSdr = currentVal ? currentVal.split('|')[0] : null;
+
+    // Zähle wie viele andere User auf dem aktuellen SDR sind
+    var currentSdrUsers = currentSdr && busySdrs[currentSdr] ? busySdrs[currentSdr] : 0;
+
+    // Zeige Lock-Icon wenn andere auf diesem SDR sind (aber wir Owner sind)
+    if (currentSdrUsers > 0) {
+        if (ownedSdrs.indexOf(currentSdr) >= 0) {
+            // Wir sind Owner - zeige Hörer-Anzahl ohne Lock
+            sdrUsersEl.html('&#128101; (' + currentSdrUsers + ')').show();
+            sdrUsersEl.attr('title', currentSdrUsers + ' Hörer folgen dir');
+        } else {
+            // Wir sind nicht Owner - zeige Lock
+            sdrUsersEl.html('&#128274; (' + currentSdrUsers + ')').show();
+            sdrUsersEl.attr('title', 'Profil gesperrt - ' + currentSdrUsers + ' andere(r) Hörer');
+        }
+    } else {
+        sdrUsersEl.hide();
+    }
+
+    // Deaktiviere Optionen von belegten SDRs
+    // AUSNAHMEN: wir sind Owner, es ist unser aktuelles Profil, oder es ist das aktive Profil (zum Aufspringen)
+    listbox.find('option').each(function() {
+        var optionVal = $(this).val();
+        var optionSdr = optionVal.split('|')[0];
+        var isBusy = busySdrs[optionSdr] && busySdrs[optionSdr] > 0;
+        var isCurrent = optionVal === currentVal;
+        var isOwned = ownedSdrs.indexOf(optionSdr) >= 0;
+        var isActiveProfile = activeProfiles[optionSdr] === optionVal;  // Kann man "aufspringen"
+
+        if (isBusy && !isCurrent && !isOwned && !isActiveProfile) {
+            $(this).prop('disabled', true);
+            $(this).attr('title', 'Belegt - ' + busySdrs[optionSdr] + ' Hörer');
+        } else {
+            $(this).prop('disabled', false);
+            if (isActiveProfile && !isOwned && !isCurrent) {
+                $(this).attr('title', busySdrs[optionSdr] + ' Hörer - Mithören möglich');
+            } else {
+                $(this).attr('title', '');
+            }
+        }
+    });
+
+    // Dropdown selbst immer aktiv lassen (nur einzelne Optionen deaktivieren)
+    listbox.prop('disabled', false);
+}
+
 function zoomInOneStep() {
     zoom_set(zoom_level + 1);
 }
@@ -1146,13 +1205,23 @@ function on_ws_recv(evt) {
                         listbox.html(json['value'].map(function (profile) {
                             return '<option value="' + profile['id'] + '">' + profile['name'] + "</option>";
                         }).join(""));
-                        $('#openwebrx-sdr-profiles-listbox').val(currentprofile.toString());
+                        // Nutze aktives Profil vom Server statt currentprofile
+                        if (json['active']) {
+                            listbox.val(json['active']);
+                            var parts = json['active'].split('|'); currentprofile['sdr_id'] = parts[0]; currentprofile['profile_id'] = parts[1];
+                        }
+                        // Zeige Lock-Icon und sperre Profile belegter SDRs (außer eigene)
+                        updateSdrUsersLock(json['busy_sdrs'] || {}, json['owned'] || [], json['active_profiles'] || {});
                         // this is a bit hacky since it only makes sense if the error is actually "no sdr devices"
                         // the only other error condition for which the overlay is used right now is "too many users"
                         // so there shouldn't be a problem here
                         if (Object.keys(json['value']).length) {
                             $('#openwebrx-error-overlay').hide();
                         }
+                        break;
+                    case "busy_sdrs":
+                        // Live-Update der belegten SDRs
+                        updateSdrUsersLock(json['value'], json['owned'] || [], json['active_profiles'] || {});
                         break;
                     case "features":
                         Modes.setFeatures(json['value']);

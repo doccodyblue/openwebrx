@@ -43,6 +43,7 @@ class ClientRegistry(object):
         n = self.clientCount()
         for c in self.clients:
             c.write_clients(n)
+            c.write_busy_sdrs()
 
     def addClient(self, client):
         pm = Config.get()

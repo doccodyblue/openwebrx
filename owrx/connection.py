@@ -195,6 +195,8 @@ class OpenWebRxReceiverClient(OpenWebRxClient, SdrSourceEventClient):
         self.configSubs.append(SdrService.getActiveSources().wire(self._onSdrDeviceChanges))
         self.configSubs.append(SdrService.getAvailableProfiles().wire(self._sendProfiles))
         self._sendProfiles()
+        # Nochmal busy_sdrs senden um sicherzustellen dass Ownership-Info ankommt
+        self.write_busy_sdrs()
 
         CpuUsageThread.getSharedInstance().add_client(self)
 
@@ -313,6 +315,27 @@ class OpenWebRxReceiverClient(OpenWebRxClient, SdrSourceEventClient):
         self.write_log_message('SDR device "{0}" is shutting down, selecting new device'.format(self.sdr.getName()))
         self.setSdr()
 
+    def onSdrUsersChange(self, count: int):
+        # Wird nicht mehr von source/__init__.py genutzt, aber Interface beibehalten
+        pass
+
+    def write_busy_sdrs(self):
+        # Berechne für jeden SDR die Anzahl anderer User (ohne sich selbst)
+        busy_sdrs = {}
+        owned_sdrs = []
+        active_profiles = {}  # SDR-ID -> aktives Profil-ID
+        for sdr_id, source in SdrService.getActiveSources().items():
+            clients = source.getClients(SdrClientClass.USER)
+            other_users = len([c for c in clients if c != self])
+            if other_users > 0:
+                busy_sdrs[sdr_id] = other_users
+                # Aktives Profil dieses SDR (damit andere "aufspringen" können)
+                active_profiles[sdr_id] = sdr_id + "|" + source.getProfileId()
+            # Prüfe ob dieser Client Owner des SDR ist
+            if source.isOwner(self):
+                owned_sdrs.append(sdr_id)
+        self.send({"type": "busy_sdrs", "value": busy_sdrs, "owned": owned_sdrs, "active_profiles": active_profiles})
+
     def getClientClass(self) -> SdrClientClass:
         return SdrClientClass.USER
 
@@ -323,7 +346,23 @@ class OpenWebRxReceiverClient(OpenWebRxClient, SdrSourceEventClient):
 
     def _sendProfiles(self, *args):
         profiles = [{"id": pid, "name": name} for pid, name in SdrService.getAvailableProfileNames().items()]
-        self.write_profiles(profiles)
+        # Aktives Profil des aktuellen SDR mitsenden
+        active = None
+        if self.sdr:
+            active = self.sdr.getId() + "|" + self.sdr.getProfileId()
+        # Für jeden SDR: Anzahl anderer User (ohne sich selbst) und Ownership
+        busy_sdrs = {}
+        owned_sdrs = []
+        active_profiles = {}
+        for sdr_id, source in SdrService.getActiveSources().items():
+            clients = source.getClients(SdrClientClass.USER)
+            other_users = len([c for c in clients if c != self])
+            if other_users > 0:
+                busy_sdrs[sdr_id] = other_users
+                active_profiles[sdr_id] = sdr_id + "|" + source.getProfileId()
+            if source.isOwner(self):
+                owned_sdrs.append(sdr_id)
+        self.send({"type": "profiles", "value": profiles, "active": active, "busy_sdrs": busy_sdrs, "owned": owned_sdrs, "active_profiles": active_profiles})
 
     def handleTextMessage(self, conn, message):
         try:
@@ -410,6 +449,8 @@ class OpenWebRxReceiverClient(OpenWebRxClient, SdrSourceEventClient):
             else:
                 # Select a new profile
                 self.sdr.activateProfile(profile)
+                # Benachrichtige alle Clients über das neue aktive Profil
+                self.sdr._notifySdrUsersChange()
 
     def setSdr(self, id=None):
         next = None

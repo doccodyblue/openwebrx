@@ -73,6 +73,9 @@ class SdrSourceEventClient(object):
     def onEnable(self):
         pass
 
+    def onSdrUsersChange(self, count: int):
+        pass
+
     def getClientClass(self) -> SdrClientClass:
         return SdrClientClass.INACTIVE
 
@@ -165,6 +168,7 @@ class SdrSource(ABC):
         self.port = getAvailablePort()
         self.monitor = None
         self.clients = []
+        self.owner = None  # Erster USER-Client "besitzt" den SDR
         self.spectrumClients = []
         self.spectrumThread = None
         self.spectrumLock = threading.Lock()
@@ -517,20 +521,39 @@ class SdrSource(ABC):
         if c in self.clients:
             return
         self.clients.append(c)
+        # Erster USER-Client wird Owner
+        if self.owner is None and c.getClientClass() == SdrClientClass.USER:
+            self.owner = c
         c.onStateChange(self.getState())
         hasUsers = self.hasClients(SdrClientClass.USER)
         hasBackgroundTasks = self.hasClients(SdrClientClass.BACKGROUND)
         if hasUsers or hasBackgroundTasks:
             self.start()
             self.setBusyState(SdrBusyState.BUSY if hasUsers else SdrBusyState.IDLE)
+        self._notifySdrUsersChange()
 
     def removeClient(self, c: SdrSourceEventClient):
         if c not in self.clients:
             return
 
         self.clients.remove(c)
+        # Wenn Owner geht, nächsten USER-Client zum Owner machen
+        if self.owner == c:
+            users = self.getClients(SdrClientClass.USER)
+            self.owner = users[0] if users else None
+        self._notifySdrUsersChange()
 
         self.checkStatus()
+
+    def isOwner(self, c) -> bool:
+        return self.owner == c
+
+    def _notifySdrUsersChange(self):
+        # Notify ALL clients about the change in SDR usage
+        from owrx.client import ClientRegistry
+        for client in ClientRegistry.getSharedInstance().clients:
+            if hasattr(client, 'write_busy_sdrs'):
+                client.write_busy_sdrs()
 
     def checkStatus(self):
         hasUsers = self.hasClients(SdrClientClass.USER)
