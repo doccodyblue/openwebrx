@@ -542,9 +542,16 @@ class NR2Processor extends AudioWorkletProcessor {
                 if (this.enabled) {
                     // Apply NR output with makeup gain and soft gate
                     let sample = this.outputRing[this.readIdx] * makeupGain * this.gateGain;
-                    // Soft limiter - engage earlier and compress harder
-                    if (sample > 0.7) sample = 0.7 + (sample - 0.7) * 0.2;
-                    else if (sample < -0.7) sample = -0.7 + (sample + 0.7) * 0.2;
+                    // Soft limiter - DX mode needs harder compression due to EQ boost
+                    if (this.profile === 'dx') {
+                        // DX: engage at 0.5, compress hard (0.12 ratio)
+                        if (sample > 0.5) sample = 0.5 + (sample - 0.5) * 0.12;
+                        else if (sample < -0.5) sample = -0.5 + (sample + 0.5) * 0.12;
+                    } else {
+                        // Easy: engage at 0.7, moderate compression
+                        if (sample > 0.7) sample = 0.7 + (sample - 0.7) * 0.2;
+                        else if (sample < -0.7) sample = -0.7 + (sample + 0.7) * 0.2;
+                    }
                     out[i] = sample;
                 } else {
                     out[i] = this.inputRing[(this.readIdx + N) % N2];
