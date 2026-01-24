@@ -784,6 +784,19 @@ img.openwebrx-mirror-img
 	position: absolute;
 	top: 0;
 	left: 0;
+}
+
+/* NR2 Gate reduction indicator - orange bar from right */
+.openwebrx-smeter-gate {
+	position: absolute;
+	top: 0;
+	right: 0;
+	height: 100%;
+	width: 0%;
+	background: linear-gradient(to left, #FF8C00, #FFA500);
+	opacity: 0.7;
+	border-radius: 0 3px 3px 0;
+	transition: width 0.1s ease-out;
 	width: 3px;
 	height: 100%;
 	background: #00ffff;
@@ -2261,6 +2274,119 @@ img.openwebrx-mirror-img
 .openwebrx-agc-btn.active {
     background: #4CAF50;
     color: #fff;
+    box-shadow: 0 0 5px #4CAF50;
+}
+
+/* NR2 Advanced Panel (WDSP-style controls) */
+.openwebrx-nr2-advanced {
+    background: rgba(0, 0, 0, 0.6);
+    border: 1px solid #555;
+    border-radius: 4px;
+    padding: 6px 8px;
+    margin-top: 4px;
+    font-size: 11px;
+}
+
+.openwebrx-nr2-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-bottom: 4px;
+}
+
+.openwebrx-nr2-row:last-child {
+    margin-bottom: 0;
+}
+
+.openwebrx-nr2-row label {
+    color: #ccc;
+    white-space: nowrap;
+    font-size: 10px;
+}
+
+.openwebrx-nr2-row select.openwebrx-panel-select {
+    height: 20px;
+    font-size: 10px;
+    padding: 1px 3px;
+    background: #333;
+    color: #fff;
+    border: 1px solid #555;
+    border-radius: 3px;
+}
+
+.openwebrx-nr2-slider,
+.openwebrx-nr2-slider-wide {
+    height: 16px !important;
+    -webkit-appearance: none;
+    appearance: none;
+    background: transparent;
+    cursor: pointer;
+}
+
+.openwebrx-nr2-slider {
+    width: 60px !important;
+}
+
+.openwebrx-nr2-slider-wide {
+    width: 120px !important;
+    flex-grow: 1;
+}
+
+/* NR2 sliders - override theme backgrounds */
+.openwebrx-nr2-row input[type="range"],
+body.has-theme .openwebrx-panel .openwebrx-nr2-row input[type="range"] {
+    background: transparent !important;
+    --track-background: #888 !important;
+}
+
+.openwebrx-nr2-row input[type="range"]::-webkit-slider-runnable-track {
+    background: #888 !important;
+    height: 6px;
+    border-radius: 3px;
+}
+
+.openwebrx-nr2-row input[type="range"]::-webkit-slider-thumb {
+    background: #fff !important;
+    -webkit-appearance: none;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    margin-top: -4px;
+    cursor: pointer;
+}
+
+.openwebrx-nr2-row input[type="range"]::-moz-range-track {
+    background: #888 !important;
+    height: 6px;
+    border-radius: 3px;
+}
+
+.openwebrx-nr2-row input[type="range"]::-moz-range-thumb {
+    background: #fff !important;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    border: none;
+    cursor: pointer;
+}
+
+/* NR2 dropdown selects - override theme */
+.openwebrx-nr2-row select,
+body.has-theme .openwebrx-panel .openwebrx-nr2-row select {
+    background: #444 !important;
+    color: #fff !important;
+    border: 1px solid #666 !important;
+    padding: 2px 5px;
+}
+
+#openwebrx-nr2-advanced-toggle {
+    font-size: 9px;
+    padding: 2px 4px;
+}
+
+#openwebrx-nr2-advanced-toggle.active {
+    background: #4CAF50;
     box-shadow: 0 0 5px #4CAF50;
 }
 

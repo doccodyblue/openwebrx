@@ -39,6 +39,9 @@ UI.loadSettings = function() {
     this.setNR(LS.has('nr_threshold')? LS.loadInt('nr_threshold') : 14);
     this.toggleNR(LS.has('nr_enabled')? LS.loadBool('nr_enabled') : false);
 
+    // Load NR2 advanced settings
+    this.loadNR2Settings();
+
     // Toggle UI sections
     for (section in this.sections) {
         var id = 'openwebrx-section-' + section;
@@ -323,6 +326,14 @@ UI.toggleNR = function(on) {
 // NR profile: 'easy' (relaxed listening) or 'dx' (aggressive weak signal)
 UI.nrProfile = 'easy';
 
+// NR2 WDSP-style settings
+UI.nr2NpeMethod = 'osms';     // 'osms' or 'simple'
+UI.nr2GainMethod = 'gamma';   // 'linear', 'log', 'gamma'
+UI.nr2AeEnabled = false;      // Artifact Elimination
+UI.nr2T1 = -0.5;              // Time constant 1 (-2.0 to +2.0)
+UI.nr2T2 = 0.2;               // Time constant 2 (0.0 to 1.0)
+UI.nr2GateDepth = 0.5;        // Gate depth (0.0 to 1.0)
+
 // Toggle NR profile between easy and DX mode
 UI.toggleNRProfile = function() {
     this.nrProfile = (this.nrProfile === 'easy') ? 'dx' : 'easy';
@@ -355,7 +366,116 @@ UI.updateNR = function() {
         var strength = Math.max(0, Math.min(100, (this.nrThreshold + 20) * 100 / 40));
         audioEngine.setNR2Strength(strength);
         audioEngine.setNR2Profile(this.nrProfile);
+        // Apply WDSP-style parameters
+        audioEngine.setNR2NpeMethod(this.nr2NpeMethod);
+        audioEngine.setNR2GainMethod(this.nr2GainMethod);
+        audioEngine.setNR2AeEnabled(this.nr2AeEnabled);
+        audioEngine.setNR2T1(this.nr2T1);
+        audioEngine.setNR2T2(this.nr2T2);
+        audioEngine.setNR2GateDepth(this.nr2GateDepth);
     }
+};
+
+// Set NPE (Noise Power Estimation) method
+UI.setNR2NpeMethod = function(method) {
+    if (method !== 'osms' && method !== 'simple') return;
+    if (this.nr2NpeMethod !== method) {
+        this.nr2NpeMethod = method;
+        LS.save('nr2_npe_method', method);
+        $('#openwebrx-nr2-npe').val(method);
+        if (typeof audioEngine !== 'undefined' && audioEngine) {
+            audioEngine.setNR2NpeMethod(method);
+        }
+    }
+};
+
+// Set Gain method
+UI.setNR2GainMethod = function(method) {
+    if (method !== 'linear' && method !== 'log' && method !== 'gamma') return;
+    if (this.nr2GainMethod !== method) {
+        this.nr2GainMethod = method;
+        LS.save('nr2_gain_method', method);
+        $('#openwebrx-nr2-gain').val(method);
+        if (typeof audioEngine !== 'undefined' && audioEngine) {
+            audioEngine.setNR2GainMethod(method);
+        }
+    }
+};
+
+// Toggle AE Filter
+UI.toggleNR2Ae = function(on) {
+    if (typeof on === 'undefined') on = !this.nr2AeEnabled;
+    if (this.nr2AeEnabled !== on) {
+        this.nr2AeEnabled = on;
+        LS.save('nr2_ae_enabled', on);
+        $('#openwebrx-nr2-ae').prop('checked', on);
+        if (typeof audioEngine !== 'undefined' && audioEngine) {
+            audioEngine.setNR2AeEnabled(on);
+        }
+    }
+};
+
+// Set T1 parameter
+UI.setNR2T1 = function(value) {
+    value = Math.max(-2.0, Math.min(2.0, parseFloat(value)));
+    if (this.nr2T1 !== value) {
+        this.nr2T1 = value;
+        LS.save('nr2_t1', value);
+        $('#openwebrx-nr2-t1').val(value);
+        $('#openwebrx-nr2-t1-label').text(value.toFixed(1));
+        if (typeof audioEngine !== 'undefined' && audioEngine) {
+            audioEngine.setNR2T1(value);
+        }
+    }
+};
+
+// Set T2 parameter
+UI.setNR2T2 = function(value) {
+    value = Math.max(0.0, Math.min(1.0, parseFloat(value)));
+    if (this.nr2T2 !== value) {
+        this.nr2T2 = value;
+        LS.save('nr2_t2', value);
+        $('#openwebrx-nr2-t2').val(value);
+        $('#openwebrx-nr2-t2-label').text(value.toFixed(2));
+        if (typeof audioEngine !== 'undefined' && audioEngine) {
+            audioEngine.setNR2T2(value);
+        }
+    }
+};
+
+// Set Gate Depth parameter
+UI.setNR2GateDepth = function(value) {
+    value = Math.max(0.0, Math.min(1.0, parseFloat(value)));
+    this.nr2GateDepth = value;
+    LS.save('nr2_gate_depth', value);
+    $('#openwebrx-nr2-gate').val(value);
+    $('#openwebrx-nr2-gate-label').text(Math.round(value * 100) + '%');
+    if (typeof audioEngine !== 'undefined' && audioEngine) {
+        audioEngine.setNR2GateDepth(value);
+    }
+};
+
+// Load NR2 advanced settings from storage
+UI.loadNR2Settings = function() {
+    var self = this;
+    var doLoad = function() {
+        if (LS.has('nr2_npe_method')) self.setNR2NpeMethod(LS.loadStr('nr2_npe_method'));
+        if (LS.has('nr2_gain_method')) self.setNR2GainMethod(LS.loadStr('nr2_gain_method'));
+        if (LS.has('nr2_ae_enabled')) self.toggleNR2Ae(LS.loadBool('nr2_ae_enabled'));
+        if (LS.has('nr2_t1')) self.setNR2T1(parseFloat(LS.loadStr('nr2_t1')));
+        if (LS.has('nr2_t2')) self.setNR2T2(parseFloat(LS.loadStr('nr2_t2')));
+        if (LS.has('nr2_gate_depth')) self.setNR2GateDepth(parseFloat(LS.loadStr('nr2_gate_depth')));
+    };
+    // Wait for DOM to be fully ready
+    $(document).ready(doLoad);
+};
+
+// Toggle NR2 advanced panel visibility
+UI.toggleNR2Advanced = function(on) {
+    var $panel = $('#openwebrx-nr2-advanced');
+    if (typeof on === 'undefined') on = !$panel.is(':visible');
+    $panel.toggle(on);
+    $('#openwebrx-nr2-advanced-toggle').toggleClass('active', on);
 }
 
 //

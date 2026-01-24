@@ -39,6 +39,14 @@ function AudioEngine(maxBufferLength, audioReporter) {
     this.nr2Enabled = false;
     this.nr2Strength = 1.0;
     this.nr2GateReduction = 0;  // 0-1, for S-meter display
+
+    // NR2 WDSP-style parameters
+    this.nr2NpeMethod = 'osms';     // 'osms' or 'simple'
+    this.nr2GainMethod = 'gamma';   // 'linear', 'log', 'gamma'
+    this.nr2AeEnabled = false;      // Artifact Elimination
+    this.nr2T1 = -0.5;              // Time constant 1
+    this.nr2T2 = 0.2;               // Time constant 2
+    this.nr2GateDepth = 0.5;        // Gate depth (0-1)
 }
 
 AudioEngine.prototype.buildAudioContext = function() {
@@ -414,6 +422,54 @@ AudioEngine.prototype.setNR2Profile = function(profile) {
     this.nr2Profile = profile;
     if (this.nr2Node) {
         this.nr2Node.port.postMessage({ profile: profile });
+    }
+};
+
+// NR2 WDSP-style parameter methods
+AudioEngine.prototype.setNR2NpeMethod = function(method) {
+    // method: 'osms' or 'simple'
+    this.nr2NpeMethod = method;
+    if (this.nr2Node) {
+        this.nr2Node.port.postMessage({ npeMethod: method });
+    }
+};
+
+AudioEngine.prototype.setNR2GainMethod = function(method) {
+    // method: 'linear', 'log', 'gamma'
+    this.nr2GainMethod = method;
+    if (this.nr2Node) {
+        this.nr2Node.port.postMessage({ gainMethod: method });
+    }
+};
+
+AudioEngine.prototype.setNR2AeEnabled = function(enabled) {
+    this.nr2AeEnabled = enabled;
+    if (this.nr2Node) {
+        this.nr2Node.port.postMessage({ aeEnabled: enabled });
+    }
+};
+
+AudioEngine.prototype.setNR2T1 = function(value) {
+    // T1: -2.0 to +2.0
+    this.nr2T1 = Math.max(-2.0, Math.min(2.0, value));
+    if (this.nr2Node) {
+        this.nr2Node.port.postMessage({ t1: this.nr2T1 });
+    }
+};
+
+AudioEngine.prototype.setNR2T2 = function(value) {
+    // T2: 0.0 to 1.0
+    this.nr2T2 = Math.max(0.0, Math.min(1.0, value));
+    if (this.nr2Node) {
+        this.nr2Node.port.postMessage({ t2: this.nr2T2 });
+    }
+};
+
+AudioEngine.prototype.setNR2GateDepth = function(value) {
+    // gateDepth: 0.0 to 1.0
+    this.nr2GateDepth = Math.max(0.0, Math.min(1.0, value));
+    if (this.nr2Node) {
+        this.nr2Node.port.postMessage({ gateDepth: this.nr2GateDepth });
     }
 };
 
