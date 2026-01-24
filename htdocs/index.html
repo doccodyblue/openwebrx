@@ -313,23 +313,23 @@
                             </select>
                             Gain:
                             <select id="openwebrx-nr2-gain" class="openwebrx-panel-listbox" onchange="UI.setNR2GainMethod(this.value);">
-                                <option value="gamma" selected>Gamma</option>
+                                <option value="gamma">Gamma</option>
                                 <option value="linear">Linear</option>
-                                <option value="log">Log</option>
+                                <option value="log" selected>Log</option>
                             </select>
-                            <input type="checkbox" id="openwebrx-nr2-ae" onchange="UI.toggleNR2Ae(this.checked);"> AE
+                            <input type="checkbox" id="openwebrx-nr2-ae" checked onchange="UI.toggleNR2Ae(this.checked);"> AE
                         </div>
                         <div class="openwebrx-panel-line">
-                            T1: <span id="openwebrx-nr2-t1-label">-0.5</span>
-                            <input id="openwebrx-nr2-t1" class="openwebrx-panel-slider" type="range" min="-2.0" max="2.0" value="-0.5" step="0.1" onchange="UI.setNR2T1(this.value)" oninput="UI.setNR2T1(this.value)">
+                            T1: <span id="openwebrx-nr2-t1-label">-1.1</span>
+                            <input id="openwebrx-nr2-t1" class="openwebrx-panel-slider" type="range" min="-2.0" max="2.0" value="-1.1" step="0.1" onchange="UI.setNR2T1(this.value)" oninput="UI.setNR2T1(this.value)">
                         </div>
                         <div class="openwebrx-panel-line">
-                            T2: <span id="openwebrx-nr2-t2-label">0.20</span>
-                            <input id="openwebrx-nr2-t2" class="openwebrx-panel-slider" type="range" min="0.0" max="1.0" value="0.2" step="0.05" onchange="UI.setNR2T2(this.value)" oninput="UI.setNR2T2(this.value)">
+                            T2: <span id="openwebrx-nr2-t2-label">0.45</span>
+                            <input id="openwebrx-nr2-t2" class="openwebrx-panel-slider" type="range" min="0.0" max="1.0" value="0.45" step="0.05" onchange="UI.setNR2T2(this.value)" oninput="UI.setNR2T2(this.value)">
                         </div>
                         <div class="openwebrx-panel-line">
-                            Gate: <span id="openwebrx-nr2-gate-label">50%</span>
-                            <input id="openwebrx-nr2-gate" class="openwebrx-panel-slider" type="range" min="0.0" max="1.0" value="0.5" step="0.05" onchange="UI.setNR2GateDepth(this.value)" oninput="UI.setNR2GateDepth(this.value)">
+                            Gate: <span id="openwebrx-nr2-gate-label">45%</span>
+                            <input id="openwebrx-nr2-gate" class="openwebrx-panel-slider" type="range" min="0.0" max="1.0" value="0.45" step="0.05" onchange="UI.setNR2GateDepth(this.value)" oninput="UI.setNR2GateDepth(this.value)">
                         </div>
                     </div>
                     <div id="openwebrx-section-settings" class="openwebrx-section-divider" onclick="UI.toggleSection(this);">&blacktriangle;&nbsp;Settings</div>

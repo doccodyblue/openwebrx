@@ -328,11 +328,11 @@ UI.nrProfile = 'easy';
 
 // NR2 WDSP-style settings
 UI.nr2NpeMethod = 'osms';     // 'osms' or 'simple'
-UI.nr2GainMethod = 'gamma';   // 'linear', 'log', 'gamma'
-UI.nr2AeEnabled = false;      // Artifact Elimination
-UI.nr2T1 = -0.5;              // Time constant 1 (-2.0 to +2.0)
-UI.nr2T2 = 0.2;               // Time constant 2 (0.0 to 1.0)
-UI.nr2GateDepth = 0.5;        // Gate depth (0.0 to 1.0)
+UI.nr2GainMethod = 'log';     // 'linear', 'log', 'gamma'
+UI.nr2AeEnabled = true;       // Artifact Elimination
+UI.nr2T1 = -1.1;              // Time constant 1 (-2.0 to +2.0)
+UI.nr2T2 = 0.45;              // Time constant 2 (0.0 to 1.0)
+UI.nr2GateDepth = 0.45;       // Gate depth (0.0 to 1.0)
 
 // Toggle NR profile between easy and DX mode
 UI.toggleNRProfile = function() {

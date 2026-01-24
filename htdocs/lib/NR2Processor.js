@@ -13,11 +13,11 @@ class NR2Processor extends AudioWorkletProcessor {
 
         // New WDSP-style parameters
         this.npeMethod = 'osms';      // 'osms' or 'simple'
-        this.gainMethod = 'gamma';    // 'linear', 'log', 'gamma'
-        this.aeEnabled = false;       // Artifact Elimination filter
-        this.t1 = -0.5;               // OSMS time constant 1 (-2.0 to +2.0)
-        this.t2 = 0.2;                // OSMS time constant 2 (0.0 to 1.0)
-        this.gateDepth = 0.5;         // Gate depth 0.0 (off) to 1.0 (full)
+        this.gainMethod = 'log';      // 'linear', 'log', 'gamma'
+        this.aeEnabled = true;        // Artifact Elimination filter
+        this.t1 = -1.1;               // OSMS time constant 1 (-2.0 to +2.0)
+        this.t2 = 0.45;               // OSMS time constant 2 (0.0 to 1.0)
+        this.gateDepth = 0.45;        // Gate depth 0.0 (off) to 1.0 (full)
 
         // Buffers
         this.inputRing = new Float32Array(this.fftSize * 2);
@@ -124,9 +124,9 @@ class NR2Processor extends AudioWorkletProcessor {
                 this.t1 = e.data.t1;
                 // Update OSMS alpha based on T1
                 // T1 controls smoothing: -2 = fast (less smoothing), +2 = slow (more smoothing)
-                // T1 range: -2 to +2 -> alpha range: 0.90 to 0.98
-                this.osmsAlpha = 0.90 + 0.02 * (this.t1 + 2);  // 0.90 to 0.98
-                this.osmsAlpha = Math.min(0.99, Math.max(0.80, this.osmsAlpha));  // Safety clamp
+                // T1 range: -2 to +2 -> alpha range: 0.80 to 0.98 (wider range for audible difference)
+                this.osmsAlpha = 0.80 + 0.045 * (this.t1 + 2);  // 0.80 to 0.98
+                this.osmsAlpha = Math.min(0.99, Math.max(0.70, this.osmsAlpha));  // Safety clamp
                 // Reset OSMS state to prevent "stuck" noise estimate
                 this.resetOSMS();
             }
@@ -134,7 +134,8 @@ class NR2Processor extends AudioWorkletProcessor {
                 this.t2 = e.data.t2;
                 // T2 controls bias compensation
                 // Lower T2 = more aggressive (lower noise floor), higher = more conservative
-                this.osmsBmin = 1.5 + this.t2 * 2.0;  // 1.5 to 3.5
+                // Wider range: 1.0 to 5.0 for more audible difference
+                this.osmsBmin = 1.0 + this.t2 * 4.0;  // 1.0 to 5.0
             }
             if (e.data.gateDepth !== undefined) {
                 this.gateDepth = Math.max(0.0, Math.min(1.0, e.data.gateDepth));
@@ -523,8 +524,8 @@ class NR2Processor extends AudioWorkletProcessor {
             this.gateOpen = false;
         }
 
-        // Level compensation: +9dB at max NR to compensate for filtered energy loss + gate
-        const makeupGain = 1 + this.amount * 1.8;  // 1.0 to 2.8 (+0 to +9dB)
+        // Level compensation: +6dB at max NR to compensate for filtered energy loss + gate
+        const makeupGain = 1 + this.amount * 1.0;  // 1.0 to 2.0 (+0 to +6dB)
 
         // VAD gate based on spectral crest factor - depth controlled by gateDepth slider
         // gateDepth: 0.0 = no gate, 1.0 = full gate
@@ -541,9 +542,9 @@ class NR2Processor extends AudioWorkletProcessor {
                 if (this.enabled) {
                     // Apply NR output with makeup gain and soft gate
                     let sample = this.outputRing[this.readIdx] * makeupGain * this.gateGain;
-                    // Soft limiter - only engage when approaching clipping
-                    if (sample > 0.9) sample = 0.9 + (sample - 0.9) * 0.3;
-                    else if (sample < -0.9) sample = -0.9 + (sample + 0.9) * 0.3;
+                    // Soft limiter - engage earlier and compress harder
+                    if (sample > 0.7) sample = 0.7 + (sample - 0.7) * 0.2;
+                    else if (sample < -0.7) sample = -0.7 + (sample + 0.7) * 0.2;
                     out[i] = sample;
                 } else {
                     out[i] = this.inputRing[(this.readIdx + N) % N2];
