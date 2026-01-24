@@ -36,7 +36,7 @@ UI.loadSettings = function() {
     this.toggleSpectrum(LS.has('ui_spectrum')? LS.loadBool('ui_spectrum') : false);
     this.toggleBandplan(LS.has('ui_bandplan')? LS.loadBool('ui_bandplan') : false);
     this.setWfTheme(LS.has('wf_theme')? LS.loadStr('wf_theme') : 'default');
-    this.setNR(LS.has('nr_threshold')? LS.loadInt('nr_threshold') : 14);
+    this.setNR(LS.has('nr_threshold')? LS.loadInt('nr_threshold') : 8);
     this.toggleNR(LS.has('nr_enabled')? LS.loadBool('nr_enabled') : false);
 
     // Load NR2 advanced settings
