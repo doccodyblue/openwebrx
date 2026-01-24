@@ -305,31 +305,31 @@
                     </div>
                     <div id="openwebrx-section-nr2" class="openwebrx-section-divider" onclick="UI.toggleSection(this);">&#9652;&nbsp;NR2 Advanced</div>
                     <div class="openwebrx-section closed">
-                        <div class="openwebrx-panel-line openwebrx-nr2-row">
-                            <label title="Noise Power Estimation method">NPE:</label>
-                            <select id="openwebrx-nr2-npe" class="openwebrx-panel-select" onchange="UI.setNR2NpeMethod(this.value);">
+                        <div class="openwebrx-panel-line">
+                            NPE:
+                            <select id="openwebrx-nr2-npe" class="openwebrx-panel-listbox" onchange="UI.setNR2NpeMethod(this.value);">
                                 <option value="osms" selected>OSMS</option>
                                 <option value="simple">Simple</option>
                             </select>
-                            <label title="Gain calculation method">Gain:</label>
-                            <select id="openwebrx-nr2-gain" class="openwebrx-panel-select" onchange="UI.setNR2GainMethod(this.value);">
+                            Gain:
+                            <select id="openwebrx-nr2-gain" class="openwebrx-panel-listbox" onchange="UI.setNR2GainMethod(this.value);">
                                 <option value="gamma" selected>Gamma</option>
                                 <option value="linear">Linear</option>
                                 <option value="log">Log</option>
                             </select>
-                            <label title="Artifact Elimination filter">
-                                <input type="checkbox" id="openwebrx-nr2-ae" onchange="UI.toggleNR2Ae(this.checked);"> AE
-                            </label>
+                            <input type="checkbox" id="openwebrx-nr2-ae" onchange="UI.toggleNR2Ae(this.checked);"> AE
                         </div>
-                        <div class="openwebrx-panel-line openwebrx-nr2-row">
-                            <label title="Time constant T1 - Controls smoothing speed">T1: <span id="openwebrx-nr2-t1-label">-0.5</span></label>
-                            <input id="openwebrx-nr2-t1" class="openwebrx-panel-slider openwebrx-nr2-slider" type="range" min="-2.0" max="2.0" value="-0.5" step="0.1" onchange="UI.setNR2T1(this.value)" oninput="UI.setNR2T1(this.value)">
-                            <label title="Time constant T2 - Controls noise bias">T2: <span id="openwebrx-nr2-t2-label">0.20</span></label>
-                            <input id="openwebrx-nr2-t2" class="openwebrx-panel-slider openwebrx-nr2-slider" type="range" min="0.0" max="1.0" value="0.2" step="0.05" onchange="UI.setNR2T2(this.value)" oninput="UI.setNR2T2(this.value)">
+                        <div class="openwebrx-panel-line">
+                            T1: <span id="openwebrx-nr2-t1-label">-0.5</span>
+                            <input id="openwebrx-nr2-t1" class="openwebrx-panel-slider" type="range" min="-2.0" max="2.0" value="-0.5" step="0.1" onchange="UI.setNR2T1(this.value)" oninput="UI.setNR2T1(this.value)">
                         </div>
-                        <div class="openwebrx-panel-line openwebrx-nr2-row">
-                            <label title="Gate depth - How much the gate attenuates noise">Gate: <span id="openwebrx-nr2-gate-label">50%</span></label>
-                            <input id="openwebrx-nr2-gate" class="openwebrx-panel-slider openwebrx-nr2-slider-wide" type="range" min="0.0" max="1.0" value="0.5" step="0.05" onchange="UI.setNR2GateDepth(this.value)" oninput="UI.setNR2GateDepth(this.value)">
+                        <div class="openwebrx-panel-line">
+                            T2: <span id="openwebrx-nr2-t2-label">0.20</span>
+                            <input id="openwebrx-nr2-t2" class="openwebrx-panel-slider" type="range" min="0.0" max="1.0" value="0.2" step="0.05" onchange="UI.setNR2T2(this.value)" oninput="UI.setNR2T2(this.value)">
+                        </div>
+                        <div class="openwebrx-panel-line">
+                            Gate: <span id="openwebrx-nr2-gate-label">50%</span>
+                            <input id="openwebrx-nr2-gate" class="openwebrx-panel-slider" type="range" min="0.0" max="1.0" value="0.5" step="0.05" onchange="UI.setNR2GateDepth(this.value)" oninput="UI.setNR2GateDepth(this.value)">
                         </div>
                     </div>
                     <div id="openwebrx-section-settings" class="openwebrx-section-divider" onclick="UI.toggleSection(this);">&blacktriangle;&nbsp;Settings</div>

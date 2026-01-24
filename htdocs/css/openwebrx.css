@@ -2333,51 +2333,29 @@ img.openwebrx-mirror-img
     flex-grow: 1;
 }
 
-/* NR2 sliders - override theme backgrounds */
-.openwebrx-nr2-row input[type="range"],
-body.has-theme .openwebrx-panel .openwebrx-nr2-row input[type="range"] {
-    background: transparent !important;
-    --track-background: #888 !important;
+/* NR2 Advanced section - fix rendering bug */
+#openwebrx-section-nr2 + .openwebrx-section {
+    transition: none !important;
+    overflow: visible !important;
 }
 
-.openwebrx-nr2-row input[type="range"]::-webkit-slider-runnable-track {
-    background: #888 !important;
-    height: 6px;
-    border-radius: 3px;
+#openwebrx-section-nr2 + .openwebrx-section.closed {
+    display: none;
 }
 
-.openwebrx-nr2-row input[type="range"]::-webkit-slider-thumb {
-    background: #fff !important;
-    -webkit-appearance: none;
-    width: 14px;
-    height: 14px;
-    border-radius: 50%;
-    margin-top: -4px;
-    cursor: pointer;
+#openwebrx-section-nr2 + .openwebrx-section:not(.closed) {
+    display: block;
+    max-height: none !important;
 }
 
-.openwebrx-nr2-row input[type="range"]::-moz-range-track {
-    background: #888 !important;
-    height: 6px;
-    border-radius: 3px;
+#openwebrx-section-nr2 + .openwebrx-section select {
+    font-size: 9pt !important;
+    padding: 1px 2px !important;
+    width: 60px !important;
 }
 
-.openwebrx-nr2-row input[type="range"]::-moz-range-thumb {
-    background: #fff !important;
-    width: 14px;
-    height: 14px;
-    border-radius: 50%;
-    border: none;
-    cursor: pointer;
-}
-
-/* NR2 dropdown selects - override theme */
-.openwebrx-nr2-row select,
-body.has-theme .openwebrx-panel .openwebrx-nr2-row select {
-    background: #444 !important;
-    color: #fff !important;
-    border: 1px solid #666 !important;
-    padding: 2px 5px;
+#openwebrx-section-nr2 + .openwebrx-section input[type="range"] {
+    width: 70px !important;
 }
 
 #openwebrx-nr2-advanced-toggle {
