@@ -5,7 +5,7 @@ This fork adds the following customizations on top of OpenWebRX+:
 
 **Features:**
 * **SDR Profile Locking** - First user on an SDR becomes "owner" and controls the profile; others can only listen along on the active profile. Prevents users from disrupting each other's reception. Live updates show listener count and ownership status.
-* **NR2 Noise Reduction** - Client-side noise reduction via AudioWorklet with adjustable strength, includes VAD-based soft gate for "HiFi SSB" experience
+* **NR2 Noise Reduction** - Client-side spectral noise reduction via AudioWorklet with OSMS (Optimally Smoothed Minimum Statistics) noise estimation. Features selectable gain methods (Linear/Log/Gamma), Artifact Elimination filter, VAD-based soft gate with adjustable depth, and NR/DX profile switching (right-click NR button). Advanced settings panel for fine-tuning T1/T2 time constants.
 * **DX Cluster Integration** - Live DX spots with waterfall markers showing spotted stations
 * **Radiosonde Decoder** - Custom RS41/DFM decoder chain with AGC and automatic signal finding (more reliable than upstream)
 * **Rotation Scheduler** - Automatic profile rotation for SDR devices
@@ -18,7 +18,7 @@ This fork adds the following customizations on top of OpenWebRX+:
 * LogPipe UTF-8 crash fix for SDR processes
 * NR button green highlight when active
 * Spotter callsign display in DX cluster logs
-* NR2 makeup gain (+9dB) compensation at high settings
+* NR2 with soft limiter to prevent clipping (profile-aware: harder compression for DX mode)
 * S-meter shows NR2 gate reduction indicator
 * Radiosonde panel display for sonde modes
 
