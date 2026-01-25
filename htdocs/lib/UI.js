@@ -483,7 +483,7 @@ UI.toggleNR2Advanced = function(on) {
 //
 
 // Current AGC profile (Slow, Mid, Fast)
-UI.agcProfile = 'Mid';
+UI.agcProfile = 'Slow';
 
 // Set AGC profile and send to server.
 UI.setAgcProfile = function(profile) {
