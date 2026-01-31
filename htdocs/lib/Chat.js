@@ -21,12 +21,17 @@ Chat.setNickname = function(nickname) {
     }
 };
 
-Chat.recvMessage = function(nickname, text, color = 'white') {
-    // Show chat panel
-    toggle_panel('openwebrx-panel-log', true);
+Chat.recvMessage = function(nickname, text, color = 'white', timestamp = null) {
+    // Show chat panel only for new messages (not history)
+    if (!timestamp) {
+        toggle_panel('openwebrx-panel-log', true);
+    }
+
+    // Use provided timestamp or current time
+    var time = timestamp ? timestamp : Date.now();
 
     divlog(
-        Utils.HHMMSS(Date.now()) + '&nbsp;['
+        Utils.HHMMSS(time) + '&nbsp;['
       + '<span class="chatname" style="color:' + color + ';">'
       + Utils.htmlEscape(nickname) + '</span>]:&nbsp;'
       + '<span class="chatmessage">' + Utils.htmlEscape(text)

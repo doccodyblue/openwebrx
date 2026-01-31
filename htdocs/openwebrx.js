@@ -77,6 +77,7 @@ function updateSdrUsersLock(newBusySdrs, newOwnedSdrs, newActiveProfiles) {
 
     // Deaktiviere Optionen von belegten SDRs
     // AUSNAHMEN: wir sind Owner, es ist unser aktuelles Profil, oder es ist das aktive Profil (zum Aufspringen)
+    console.log('updateSdrUsersLock:', {busySdrs, ownedSdrs, activeProfiles, currentVal});
     listbox.find('option').each(function() {
         var optionVal = $(this).val();
         var optionSdr = optionVal.split('|')[0];
@@ -84,6 +85,7 @@ function updateSdrUsersLock(newBusySdrs, newOwnedSdrs, newActiveProfiles) {
         var isCurrent = optionVal === currentVal;
         var isOwned = ownedSdrs.indexOf(optionSdr) >= 0;
         var isActiveProfile = activeProfiles[optionSdr] === optionVal;  // Kann man "aufspringen"
+        if (isBusy) console.log('Option:', optionVal, {isBusy, isCurrent, isOwned, isActiveProfile, activeForSdr: activeProfiles[optionSdr]});
 
         if (isBusy && !isCurrent && !isOwned && !isActiveProfile) {
             $(this).prop('disabled', true);
@@ -1292,6 +1294,14 @@ function on_ws_recv(evt) {
                         break;
                     case 'chat_message':
                         Chat.recvMessage(json['name'], json['text'], json['color']);
+                        break;
+                    case 'chat_history':
+                        // Zeige Chat-History für neue Clients
+                        if (json['value'] && json['value'].length > 0) {
+                            json['value'].forEach(function(msg) {
+                                Chat.recvMessage(msg.name, msg.text, msg.color, msg.timestamp);
+                            });
+                        }
                         break;
                     case 'backoff':
                         divlog("Server is currently busy: " + json['reason'], true);

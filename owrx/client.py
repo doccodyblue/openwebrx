@@ -36,6 +36,8 @@ class ClientRegistry(object):
         self.chatCount = 1
         self.chatColors = ColorCache()
         self.chatLock = threading.Lock()
+        self.chatHistory = []  # Ring-Buffer für Chat-History
+        self.chatHistoryMax = 50  # Max. Anzahl gespeicherter Nachrichten
         Config.get().wireProperty("max_clients", self._checkClientCount)
         super().__init__()
 
@@ -144,6 +146,19 @@ class ClientRegistry(object):
                 self.chat[client] = { "name": name, "color": color }
                 self.chatCount = self.chatCount + 1
 
+        # Speichere Nachricht in History (mit Timestamp)
+        import time
+        historyEntry = {
+            "name": name,
+            "text": text,
+            "color": color,
+            "timestamp": int(time.time() * 1000)
+        }
+        self.chatHistory.append(historyEntry)
+        # Ring-Buffer: älteste Nachrichten entfernen wenn voll
+        if len(self.chatHistory) > self.chatHistoryMax:
+            self.chatHistory = self.chatHistory[-self.chatHistoryMax:]
+
         # Broadcast message to all clients
         for c in self.clients:
             c.write_chat_message(name, text, color)
@@ -155,6 +170,11 @@ class ClientRegistry(object):
     def relayChatMessage(self, name: str, text: str):
         for c in self.clients:
             c.write_chat_message(name, text, "#ccc")
+
+    # Get chat history for new clients.
+    def getChatHistory(self):
+        with self.chatLock:
+            return list(self.chatHistory)
 
     # Broadcast administrative message to all connected clients.
     def broadcastAdminMessage(self, text: str):

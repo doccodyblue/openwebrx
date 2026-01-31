@@ -209,6 +209,11 @@ class OpenWebRxReceiverClient(OpenWebRxClient, SdrSourceEventClient):
         except:
             pass
 
+        # Send chat history to new client
+        chatHistory = ClientRegistry.getSharedInstance().getChatHistory()
+        if chatHistory:
+            self.write_chat_history(chatHistory)
+
     def setupStack(self):
         stack = PropertyStack()
         # stack layer 0 reserved for sdr properties
@@ -326,7 +331,10 @@ class OpenWebRxReceiverClient(OpenWebRxClient, SdrSourceEventClient):
         active_profiles = {}  # SDR-ID -> aktives Profil-ID
         for sdr_id, source in SdrService.getActiveSources().items():
             clients = source.getClients(SdrClientClass.USER)
-            other_users = len([c for c in clients if c != self])
+            # Nur echte Browser-Clients zählen (nicht DspManager, SpectrumThread etc.)
+            receiver_clients = [c for c in clients if isinstance(c, OpenWebRxReceiverClient)]
+            other_users = len([c for c in receiver_clients if c != self])
+            logger.info("write_busy_sdrs: sdr=%s, receiver_clients=%d, other_users=%d, profile=%s", sdr_id, len(receiver_clients), other_users, source.getProfileId())
             if other_users > 0:
                 busy_sdrs[sdr_id] = other_users
                 # Aktives Profil dieses SDR (damit andere "aufspringen" können)
@@ -334,6 +342,7 @@ class OpenWebRxReceiverClient(OpenWebRxClient, SdrSourceEventClient):
             # Prüfe ob dieser Client Owner des SDR ist
             if source.isOwner(self):
                 owned_sdrs.append(sdr_id)
+        logger.info("write_busy_sdrs RESULT: busy=%s, owned=%s, active_profiles=%s", busy_sdrs, owned_sdrs, active_profiles)
         self.send({"type": "busy_sdrs", "value": busy_sdrs, "owned": owned_sdrs, "active_profiles": active_profiles})
 
     def getClientClass(self) -> SdrClientClass:
@@ -356,7 +365,9 @@ class OpenWebRxReceiverClient(OpenWebRxClient, SdrSourceEventClient):
         active_profiles = {}
         for sdr_id, source in SdrService.getActiveSources().items():
             clients = source.getClients(SdrClientClass.USER)
-            other_users = len([c for c in clients if c != self])
+            # Nur echte Browser-Clients zählen (nicht DspManager, SpectrumThread etc.)
+            receiver_clients = [c for c in clients if isinstance(c, OpenWebRxReceiverClient)]
+            other_users = len([c for c in receiver_clients if c != self])
             if other_users > 0:
                 busy_sdrs[sdr_id] = other_users
                 active_profiles[sdr_id] = sdr_id + "|" + source.getProfileId()
@@ -602,6 +613,12 @@ class OpenWebRxReceiverClient(OpenWebRxClient, SdrSourceEventClient):
             "name": name,
             "text": text,
             "color": color
+        })
+
+    def write_chat_history(self, history):
+        self.send({
+            "type": "chat_history",
+            "value": history
         })
 
     def write_modes(self, modes):
