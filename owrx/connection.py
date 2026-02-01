@@ -116,7 +116,7 @@ class OpenWebRxClient(Client, metaclass=ABCMeta):
         """Check if client IP is in the timeout exempt list."""
         try:
             config = Config.get()
-            exempt_ips = config.get("timeout_exempt_ips", "")
+            exempt_ips = config["timeout_exempt_ips"] if "timeout_exempt_ips" in config else ""
             if not exempt_ips:
                 return False
 
