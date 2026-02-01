@@ -101,6 +101,9 @@ class ClientRegistry(object):
                 "banned"    : self.isBanned(client.conn.handler),
                 "clients"   : self.clientCount()
             })
+            # Include nickname if known
+            if client in self.chat:
+                data["name"] = self.chat[client]["name"]
             ReportingEngine.getSharedInstance().spot(data)
 
     # Report chat message from a client
