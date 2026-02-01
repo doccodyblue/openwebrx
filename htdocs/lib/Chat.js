@@ -19,6 +19,10 @@ Chat.loadSettings = function() {
 
 // Show modal to require nickname input
 Chat.showNicknameModal = function() {
+    // Don't create multiple modals
+    if (document.getElementById('nickname-modal-overlay')) {
+        return;
+    }
     // Create modal overlay
     var modal = document.createElement('div');
     modal.id = 'nickname-modal-overlay';
@@ -35,11 +39,10 @@ Chat.showNicknameModal = function() {
     var input = document.getElementById('nickname-modal-input');
     var submit = document.getElementById('nickname-modal-submit');
 
-    var self = this;
     var submitNickname = function() {
         var name = input.value.trim();
         if (name.length >= 2) {
-            self.setNickname(name);
+            Chat.setNickname(name);
             modal.remove();
         } else {
             input.classList.add('error');
