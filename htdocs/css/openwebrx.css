@@ -784,6 +784,13 @@ img.openwebrx-mirror-img
 	position: absolute;
 	top: 0;
 	left: 0;
+	width: 3px;
+	height: 100%;
+	background: #00ffff;
+	box-shadow: 0 0 4px #00ffff;
+	transform: translateX(0);
+	transition: transform 0.1s linear;
+	border-radius: 1px;
 }
 
 /* NR2 Gate reduction indicator - orange bar from right */
@@ -797,13 +804,6 @@ img.openwebrx-mirror-img
 	opacity: 0.7;
 	border-radius: 0 3px 3px 0;
 	transition: width 0.1s ease-out;
-	width: 3px;
-	height: 100%;
-	background: #00ffff;
-	box-shadow: 0 0 4px #00ffff;
-	transform: translateX(0);
-	transition: transform 0.1s linear;
-	border-radius: 1px;
 }
 
 #openwebrx-clock-utc
@@ -2399,4 +2399,75 @@ img.openwebrx-mirror-img
 
 .openwebrx-panel.under-construction:hover .under-construction-description {
     max-height: 500px;
+}
+
+/* Nickname Modal Overlay */
+#nickname-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.85);
+    z-index: 10000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.nickname-modal {
+    background: #333;
+    border: 2px solid #0096ff;
+    border-radius: 8px;
+    padding: 30px;
+    text-align: center;
+    max-width: 400px;
+    box-shadow: 0 0 30px rgba(0, 150, 255, 0.5);
+}
+
+.nickname-modal h2 {
+    color: #0096ff;
+    margin: 0 0 15px 0;
+    font-size: 24px;
+}
+
+.nickname-modal p {
+    color: #ccc;
+    margin: 0 0 20px 0;
+}
+
+.nickname-modal input {
+    width: 100%;
+    padding: 12px;
+    font-size: 16px;
+    border: 2px solid #555;
+    border-radius: 4px;
+    background: #222;
+    color: #fff;
+    box-sizing: border-box;
+    margin-bottom: 15px;
+}
+
+.nickname-modal input:focus {
+    border-color: #0096ff;
+    outline: none;
+}
+
+.nickname-modal input.error {
+    border-color: #ff4444;
+}
+
+.nickname-modal button {
+    padding: 12px 40px;
+    font-size: 16px;
+    background: #0096ff;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.nickname-modal button:hover {
+    background: #007acc;
 }

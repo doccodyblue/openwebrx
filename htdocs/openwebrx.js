@@ -1147,6 +1147,14 @@ function on_ws_recv(evt) {
                         break;
                     case "receiver_details":
                         $('.webrx-top-container').header().setDetails(json['value']);
+                        // Set nickname requirement from server config
+                        if (json['value']['require_nickname']) {
+                            Chat.nicknameRequired = true;
+                            // Show modal if nickname not set yet
+                            if (!LS.has('chatname') || !LS.loadStr('chatname')) {
+                                Chat.showNicknameModal();
+                            }
+                        }
                         break;
                     case "smeter":
                         smeter_level = json['value'];

@@ -21,6 +21,7 @@ class ReceiverDetails(PropertyFilter):
                 "usage_policy_url",
                 "session_timeout",
                 "keep_files",
+                "require_nickname",
             )
         )
 

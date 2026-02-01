@@ -6,10 +6,52 @@ function Chat() {}
 
 // We start with these values
 Chat.nickname = '';
+Chat.nicknameRequired = false;
 
 // Load chat settings from local storage.
 Chat.loadSettings = function() {
     this.setNickname(LS.has('chatname')? LS.loadStr('chatname') : '');
+    // Check if nickname is required and not set
+    if (this.nicknameRequired && !this.nickname) {
+        this.showNicknameModal();
+    }
+};
+
+// Show modal to require nickname input
+Chat.showNicknameModal = function() {
+    // Create modal overlay
+    var modal = document.createElement('div');
+    modal.id = 'nickname-modal-overlay';
+    modal.innerHTML = `
+        <div class="nickname-modal">
+            <h2>Willkommen!</h2>
+            <p>Bitte gib deinen Namen oder dein Rufzeichen ein:</p>
+            <input type="text" id="nickname-modal-input" placeholder="Rufzeichen / Nickname" maxlength="20" autofocus>
+            <button id="nickname-modal-submit">OK</button>
+        </div>
+    `;
+    document.body.appendChild(modal);
+
+    var input = document.getElementById('nickname-modal-input');
+    var submit = document.getElementById('nickname-modal-submit');
+
+    var self = this;
+    var submitNickname = function() {
+        var name = input.value.trim();
+        if (name.length >= 2) {
+            self.setNickname(name);
+            modal.remove();
+        } else {
+            input.classList.add('error');
+            input.placeholder = 'Mindestens 2 Zeichen!';
+        }
+    };
+
+    submit.addEventListener('click', submitNickname);
+    input.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') submitNickname();
+    });
+    input.focus();
 };
 
 // Set chat nickname.
