@@ -12,6 +12,10 @@ This fork adds the following customizations on top of OpenWebRX+:
 * **Bandpass Reset** - Right-click on USB/LSB buttons to reset filter to defaults (70-3000 Hz)
 * **AGC Profile Switching** - Runtime AGC speed control (Slow/Mid/Fast) via S/M/F buttons for USB/LSB/AM/CW modes
 * **AGC Attack Tuning** - Patched SLOW AGC profile with faster attack to reduce clipping on loud signals
+* **Persistent Chat History** - Chat messages are stored server-side and sent to new clients, so users see recent conversation history when joining
+* **Nickname Requirement** - Optional setting to require users to enter a nickname/callsign before using the receiver (configurable in Admin Interface)
+* **IP Whitelist for Timeout** - Exempt specific IPs or CIDR ranges from session timeout (e.g., local network users never get kicked)
+* **MQTT Client Names** - Client connect/disconnect events now include the user's nickname (if set) for Home Assistant integration
 
 **Fixes:**
 * New users receive active SDR profile instead of default (no more "profile hijacking")
