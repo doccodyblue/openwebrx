@@ -116,10 +116,21 @@ class GeneralSettingsController(SettingsFormController):
                     append="s",
                 ),
                 TextInput(
+                    "timeout_exempt_ips",
+                    "Timeout exempt IPs",
+                    infotext="Comma-separated list of IP addresses or CIDR ranges exempt from session timeout "
+                    + "(e.g. 192.168.1.0/24, 10.0.0.0/8, 127.0.0.1).",
+                ),
+                TextInput(
                     "usage_policy_url",
                     "Usage policy URL",
                     infotext="Specifies web page describing receiver usage policy "
                     + "and shown when a client session times out.",
+                ),
+                CheckboxInput(
+                    "require_nickname",
+                    "Require nickname/callsign before using receiver",
+                    infotext="When enabled, users must enter a nickname or callsign before they can use the receiver.",
                 ),
                 CheckboxInput(
                     "bot_ban_enabled",

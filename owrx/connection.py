@@ -18,6 +18,7 @@ from owrx.waterfall import WaterfallOptions
 from owrx.websocket import Handler
 from queue import Queue, Full, Empty
 from abc import ABCMeta, abstractmethod
+from ipaddress import ip_address, ip_network
 import json
 import threading
 import struct
@@ -103,10 +104,52 @@ class OpenWebRxClient(Client, metaclass=ABCMeta):
 
         def send_receiver_info(*args):
             receiver_info = receiver_details.__dict__()
+            # Check if client IP is exempt from timeout
+            if self._is_timeout_exempt():
+                receiver_info["session_timeout"] = 0
             self.write_receiver_details(receiver_info)
 
         self._detailsSubscription = receiver_details.wire(send_receiver_info)
         send_receiver_info()
+
+    def _is_timeout_exempt(self):
+        """Check if client IP is in the timeout exempt list."""
+        try:
+            config = Config.get()
+            exempt_ips = config.get("timeout_exempt_ips", "")
+            if not exempt_ips:
+                return False
+
+            # Get client IP
+            client_ip = self.conn.handler.client_address[0]
+            # Check for X-Forwarded-For if behind proxy
+            if ip_address(client_ip).is_private and hasattr(self.conn.handler, "headers"):
+                if "x-forwarded-for" in self.conn.handler.headers:
+                    client_ip = self.conn.handler.headers['x-forwarded-for'].split(',')[0].strip()
+
+            client_addr = ip_address(client_ip)
+
+            # Check each entry in the exempt list
+            for entry in exempt_ips.split(","):
+                entry = entry.strip()
+                if not entry:
+                    continue
+                try:
+                    # Try as CIDR network
+                    if "/" in entry:
+                        if client_addr in ip_network(entry, strict=False):
+                            return True
+                    else:
+                        # Try as single IP
+                        if client_addr == ip_address(entry):
+                            return True
+                except ValueError:
+                    logger.warning("Invalid IP/CIDR in timeout_exempt_ips: %s", entry)
+                    continue
+            return False
+        except Exception as e:
+            logger.exception("Error checking timeout exemption: %s", e)
+            return False
 
     def write_receiver_details(self, details):
         self.send({"type": "receiver_details", "value": details})
