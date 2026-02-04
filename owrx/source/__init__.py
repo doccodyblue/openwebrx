@@ -521,8 +521,8 @@ class SdrSource(ABC):
         if c in self.clients:
             return
         self.clients.append(c)
-        # Erster USER-Client wird Owner
-        if self.owner is None and c.getClientClass() == SdrClientClass.USER:
+        # Erster Browser-Client wird Owner (nicht DspManager/SpectrumThread)
+        if self.owner is None and type(c).__name__ == "OpenWebRxReceiverClient":
             self.owner = c
         c.onStateChange(self.getState())
         hasUsers = self.hasClients(SdrClientClass.USER)
@@ -537,10 +537,12 @@ class SdrSource(ABC):
             return
 
         self.clients.remove(c)
-        # Wenn Owner geht, nächsten USER-Client zum Owner machen
+        # Wenn Owner geht, nächsten Browser-Client zum Owner machen
         if self.owner == c:
             users = self.getClients(SdrClientClass.USER)
-            self.owner = users[0] if users else None
+            # Nur echte Browser-Clients können Owner werden
+            receiver_clients = [u for u in users if type(u).__name__ == "OpenWebRxReceiverClient"]
+            self.owner = receiver_clients[0] if receiver_clients else None
         self._notifySdrUsersChange()
 
         self.checkStatus()

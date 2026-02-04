@@ -397,7 +397,7 @@ class OpenWebRxReceiverClient(OpenWebRxClient, SdrSourceEventClient):
             self.setSdr()
 
     def _sendProfiles(self, *args):
-        profiles = [{"id": pid, "name": info["name"], "locked": info["locked"]} for pid, info in SdrService.getAvailableProfileNames().items()]
+        profiles = [{"id": pid, "name": info["name"], "restricted": info["restricted"]} for pid, info in SdrService.getAvailableProfileNames().items()]
         # Aktives Profil des aktuellen SDR mitsenden
         active = None
         if self.sdr:

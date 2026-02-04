@@ -1220,9 +1220,9 @@ function on_ws_recv(evt) {
                     case "profiles":
                         var listbox = $("#openwebrx-sdr-profiles-listbox");
                         var magicKey = getMagicKeyFromUrl();
-                        // Filter: Gesperrte Profile nur anzeigen wenn magic_key vorhanden
+                        // Filter: Restricted Profile nur anzeigen wenn magic_key vorhanden
                         var visibleProfiles = json['value'].filter(function(profile) {
-                            return !profile['locked'] || magicKey;
+                            return !profile['restricted'] || magicKey;
                         });
                         listbox.html(visibleProfiles.map(function (profile) {
                             return '<option value="' + profile['id'] + '">' + profile['name'] + "</option>";
