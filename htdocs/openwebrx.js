@@ -48,6 +48,13 @@ var busySdrs = {};
 var ownedSdrs = [];
 var activeProfiles = {};  // SDR-ID -> aktives Profil (zum "Aufspringen")
 
+// Hilfsfunktion: Magic Key aus URL-Hash lesen
+function getMagicKeyFromUrl() {
+    if (!window.location.hash) return null;
+    var match = window.location.hash.match(/key=([^,&]+)/);
+    return match ? match[1] : null;
+}
+
 function updateSdrUsersLock(newBusySdrs, newOwnedSdrs, newActiveProfiles) {
     busySdrs = newBusySdrs || {};
     ownedSdrs = newOwnedSdrs || [];
@@ -1212,7 +1219,12 @@ function on_ws_recv(evt) {
                         break;
                     case "profiles":
                         var listbox = $("#openwebrx-sdr-profiles-listbox");
-                        listbox.html(json['value'].map(function (profile) {
+                        var magicKey = getMagicKeyFromUrl();
+                        // Filter: Gesperrte Profile nur anzeigen wenn magic_key vorhanden
+                        var visibleProfiles = json['value'].filter(function(profile) {
+                            return !profile['locked'] || magicKey;
+                        });
+                        listbox.html(visibleProfiles.map(function (profile) {
                             return '<option value="' + profile['id'] + '">' + profile['name'] + "</option>";
                         }).join(""));
                         // Nutze aktives Profil vom Server statt currentprofile
@@ -1225,7 +1237,7 @@ function on_ws_recv(evt) {
                         // this is a bit hacky since it only makes sense if the error is actually "no sdr devices"
                         // the only other error condition for which the overlay is used right now is "too many users"
                         // so there shouldn't be a problem here
-                        if (Object.keys(json['value']).length) {
+                        if (visibleProfiles.length) {
                             $('#openwebrx-error-overlay').hide();
                         }
                         break;

@@ -282,5 +282,10 @@ class SdrService(object):
         for s_id, source in SdrService.getAllSources().items():
             if source.isEnabled() and not source.isFailed():
                 for p_id, profile in source.getProfiles().items():
-                    result["{}|{}".format(s_id, p_id)] = "{} {}".format(source.getName(), profile["name"])
+                    # Check if profile is key_locked (only profile-level, not current profile state)
+                    profile_locked = "key_locked" in profile and profile["key_locked"]
+                    result["{}|{}".format(s_id, p_id)] = {
+                        "name": "{} {}".format(source.getName(), profile["name"]),
+                        "locked": profile_locked
+                    }
         return result
