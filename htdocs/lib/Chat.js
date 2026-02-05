@@ -17,6 +17,13 @@ Chat.loadSettings = function() {
     }
 };
 
+// Send nickname to server (call after WebSocket is connected)
+Chat.sendNicknameToServer = function() {
+    if (this.nickname && typeof ws !== 'undefined' && ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify({'type': 'setnickname', 'name': this.nickname}));
+    }
+};
+
 // Show modal to require nickname input
 Chat.showNicknameModal = function() {
     // Don't create multiple modals
@@ -63,6 +70,10 @@ Chat.setNickname = function(nickname) {
         this.nickname = nickname;
         LS.save('chatname', nickname);
         $('#openwebrx-chat-name').val(nickname);
+        // Send nickname to server so it knows who we are
+        if (nickname && typeof ws !== 'undefined' && ws.readyState === WebSocket.OPEN) {
+            ws.send(JSON.stringify({'type': 'setnickname', 'name': nickname}));
+        }
     }
 };
 

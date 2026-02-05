@@ -115,6 +115,31 @@ class ClientRegistry(object):
             "message" : text
         })
 
+    # Register nickname for a client without broadcasting a message
+    def registerNickname(self, client, name: str):
+        if not name:
+            return
+        with self.chatLock:
+            # Names can only include alphanumerics
+            name = re.sub(r"\W+", "", name)
+            if not name:
+                return
+            # Cannot have duplicate names
+            if client not in self.chat or name != self.chat[client]["name"]:
+                for c in self.chat:
+                    if name == self.chat[c]["name"]:
+                        return  # Name already taken
+            # Register or update client
+            if client in self.chat:
+                curname = self.chat[client]["name"]
+                if name != curname:
+                    self.chatColors.rename(curname, name)
+                    self.chat[client]["name"] = name
+            else:
+                color = self.chatColors.getColor(name)
+                self.chat[client] = { "name": name, "color": color }
+                self.chatCount = self.chatCount + 1
+
     # Broadcast chat message to all connected clients.
     def broadcastChatMessage(self, client, text: str, name: str = None):
         # If chat disabled, ignore messages

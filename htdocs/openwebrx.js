@@ -1421,6 +1421,8 @@ function on_ws_opened() {
             "hd_output_rate": audioEngine.getHdOutputRate()
         }
     }));
+    // Send nickname to server if already set
+    Chat.sendNicknameToServer();
 }
 
 var was_error = 0;

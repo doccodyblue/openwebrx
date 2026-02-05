@@ -465,6 +465,12 @@ class OpenWebRxReceiverClient(OpenWebRxClient, SdrSourceEventClient):
                             message["text"],
                             message["name"] if "name" in message else None
                         )
+                elif message["type"] == "setnickname":
+                    if "name" in message:
+                        ClientRegistry.getSharedInstance().registerNickname(
+                            self,
+                            message["name"]
+                        )
 
             else:
                 logger.warning("received message without type: {0}".format(message))
