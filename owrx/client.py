@@ -4,10 +4,15 @@ from datetime import datetime, timedelta
 from ipaddress import ip_address
 import threading
 import re
+import json
+import os
 
 import logging
 
 logger = logging.getLogger(__name__)
+
+# Persistent chat history file
+CHAT_HISTORY_FILE = "/var/lib/openwebrx/chat_history.json"
 
 
 class TooManyClientsException(Exception):
@@ -36,10 +41,30 @@ class ClientRegistry(object):
         self.chatCount = 1
         self.chatColors = ColorCache()
         self.chatLock = threading.Lock()
-        self.chatHistory = []  # Ring-Buffer für Chat-History
         self.chatHistoryMax = 50  # Max. Anzahl gespeicherter Nachrichten
+        self.chatHistory = self._loadChatHistory()  # Load from disk
         Config.get().wireProperty("max_clients", self._checkClientCount)
         super().__init__()
+
+    def _loadChatHistory(self):
+        """Load chat history from disk"""
+        try:
+            if os.path.exists(CHAT_HISTORY_FILE):
+                with open(CHAT_HISTORY_FILE, 'r') as f:
+                    history = json.load(f)
+                    logger.info("Loaded %d chat messages from disk", len(history))
+                    return history[-self.chatHistoryMax:]  # Limit to max
+        except Exception as e:
+            logger.warning("Could not load chat history: %s", e)
+        return []
+
+    def _saveChatHistory(self):
+        """Save chat history to disk"""
+        try:
+            with open(CHAT_HISTORY_FILE, 'w') as f:
+                json.dump(self.chatHistory, f)
+        except Exception as e:
+            logger.warning("Could not save chat history: %s", e)
 
     def broadcast(self):
         n = self.clientCount()
@@ -186,6 +211,8 @@ class ClientRegistry(object):
         # Ring-Buffer: älteste Nachrichten entfernen wenn voll
         if len(self.chatHistory) > self.chatHistoryMax:
             self.chatHistory = self.chatHistory[-self.chatHistoryMax:]
+        # Save to disk
+        self._saveChatHistory()
 
         # Broadcast message to all clients
         for c in self.clients:
