@@ -743,6 +743,11 @@ class SdrDeviceDescription(object):
                 "Require magic key to switch profile",
                 infotext="A device will require the key to switch profiles. A profile will require the key to switch to or from.",
             ),
+            CheckboxInput(
+                "restricted",
+                "Restrict profile to magic key holders",
+                infotext="Hide this profile from users without the magic key in their URL (#key=xxx).",
+            ),
             GainInput("rf_gain", "Device gain", self.hasAgc()),
             NumberInput(
                 "ppm",
@@ -850,6 +855,7 @@ class SdrDeviceDescription(object):
             "repeater_range",
             "rig_enabled",
             "key_locked",
+            "restricted",
         ]
 
     def getDeviceSection(self):

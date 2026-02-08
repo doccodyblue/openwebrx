@@ -16,7 +16,7 @@ This fork adds the following customizations on top of OpenWebRX+:
 * **Nickname Requirement** - Optional setting to require users to enter a nickname/callsign before using the receiver (configurable in Admin Interface)
 * **IP Whitelist for Timeout** - Exempt specific IPs or CIDR ranges from session timeout (e.g., local network users never get kicked)
 * **MQTT Client Names** - Client connect/disconnect events now include the user's nickname (if set) for Home Assistant integration. Nicknames are automatically sent to the server on connect (no chat message required).
-* **Restricted Profiles** - Profiles with `restricted=true` are hidden from users without the magic_key in their URL (`#key=xxx`). Useful for hiding sensitive profiles (e.g., BOS, Marine) from public access while allowing authorized users full access via a shared link. Separate from `key_locked` which prevents switching away from a profile.
+* **Restricted Profiles** - Profiles with `restricted=true` are hidden from users without the magic_key in their URL (`#key=xxx`). Configurable via checkbox in Admin Interface under profile settings. Useful for hiding sensitive profiles (e.g., BOS, Marine) from public access while allowing authorized users full access via a shared link. Separate from `key_locked` which prevents switching away from a profile.
 
 **Fixes:**
 * New users receive active SDR profile instead of default (no more "profile hijacking")
