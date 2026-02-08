@@ -2,7 +2,7 @@ from owrx.toolbox import TextParser
 from owrx.reporting import ReportingEngine
 from owrx.map import Map, LatLngLocation
 from owrx.bands import Bandplan
-from datetime import datetime
+from datetime import datetime, timezone
 import json
 
 import logging
@@ -42,7 +42,7 @@ class SondeParser(TextParser):
     def updateMap(data, band = None, timestamp = None):
         if "lat" in data and "lon" in data and "source" in data:
             loc = SondeLocation(data)
-            Map.getSharedInstance().updateLocation(data["source"], loc, data["mode"], band, timestamp)
+            Map.getSharedInstance().updateLocation(data["source"], loc, data["mode"], band, timestamp=timestamp)
 
     def setDialFrequency(self, frequency: int) -> None:
         super().setDialFrequency(frequency)
@@ -131,7 +131,8 @@ class SondeParser(TextParser):
             del out["data"]
 
         # Update location on the map
-        SondeParser.updateMap(out, self.band, out["timestamp"])
+        ts = datetime.fromtimestamp(out["timestamp"] / 1000, timezone.utc)
+        SondeParser.updateMap(out, self.band, ts)
 
         # Do not return anything when in service mode
         return None if self.service else out

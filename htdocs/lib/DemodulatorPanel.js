@@ -193,7 +193,7 @@ DemodulatorPanel.prototype.updatePanels = function() {
     // ISM modes share the same panel
     toggle_panel("openwebrx-panel-ism-message", ['ism', 'wmbus'].indexOf(modulation) >= 0);
     // Skimmer modes share the same panel
-    toggle_panel("openwebrx-panel-cwskimmer-message", ['cwskimmer', 'rttyskimmer'].indexOf(modulation) >= 0);
+    toggle_panel("openwebrx-panel-skimmer-message", ['cwskimmer', 'rttyskimmer'].indexOf(modulation) >= 0);
     var showRadiosonde = ['sonde-rs41', 'sonde-dfm9', 'sonde-dfm17', 'sonde-mts01', 'sonde-m10', 'sonde-m20'].indexOf(modulation) >= 0;
     toggle_panel("openwebrx-panel-radiosonde-message", showRadiosonde);
     if (showRadiosonde) $('#openwebrx-panel-radiosonde-message').radiosondeMessagePanel();
