@@ -36,6 +36,26 @@ class WebpageController(TemplateController):
 
 
 class IndexController(WebpageController):
+    def template_variables(self):
+        variables = super().template_variables()
+        pm = Config.get()
+
+        # Page title with fallback
+        page_title = pm["page_title"] if "page_title" in pm and pm["page_title"] else ""
+        if page_title:
+            variables["page_title"] = page_title
+        else:
+            variables["page_title"] = "OpenWebRX+ | Open Source SDR Web App for Everyone!"
+
+        # Meta description (empty string if not set)
+        meta_desc = pm["meta_description"] if "meta_description" in pm and pm["meta_description"] else ""
+        if meta_desc:
+            variables["meta_description"] = '<meta name="description" content="{}">'.format(meta_desc)
+        else:
+            variables["meta_description"] = ""
+
+        return variables
+
     def indexAction(self):
         self.serve_template("index.html", **self.template_variables())
 

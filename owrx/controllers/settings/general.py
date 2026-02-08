@@ -78,6 +78,19 @@ class GeneralSettingsController(SettingsFormController):
                 TextAreaInput("photo_desc", "Photo description", infotext="HTML supported "),
             ),
             Section(
+                "Page SEO",
+                TextInput(
+                    "page_title",
+                    "Page title",
+                    infotext="Custom browser tab title. Leave empty for default.",
+                ),
+                TextAreaInput(
+                    "meta_description",
+                    "Meta description",
+                    infotext="Description shown in search engine results. Leave empty for none.",
+                ),
+            ),
+            Section(
                 "Receiver images",
                 AvatarInput(
                     "receiver_avatar",

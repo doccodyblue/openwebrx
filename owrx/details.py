@@ -14,6 +14,8 @@ class ReceiverDetails(PropertyFilter):
             ByPropertyName(
                 "receiver_name",
                 "receiver_location",
+                "page_title",
+                "meta_description",
                 "receiver_asl",
                 "receiver_gps",
                 "photo_title",

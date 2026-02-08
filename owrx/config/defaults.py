@@ -7,6 +7,8 @@ defaultConfig = PropertyLayer(
     max_clients_per_ip=20,
     receiver_name="[Callsign]",
     receiver_location="Budapest, Hungary",
+    page_title="",
+    meta_description="",
     receiver_asl=200,
     receiver_admin="example@example.com",
     receiver_gps=PropertyLayer(lat=47.0, lon=19.0),
