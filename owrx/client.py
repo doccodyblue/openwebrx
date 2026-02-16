@@ -83,6 +83,7 @@ class ClientRegistry(object):
         self.clients.append(client)
         self.broadcast()
         self.reportClient(client, { "state":"Connected" })
+        self.reportClientActivity(client, "connect")
 
     def clientCount(self):
         return len(self.clients)
@@ -100,6 +101,7 @@ class ClientRegistry(object):
         ])
 
     def removeClient(self, client):
+        self.reportClientActivity(client, "disconnect")
         try:
             if client in self.chat:
                 del self.chat[client]
@@ -129,6 +131,42 @@ class ClientRegistry(object):
             # Include nickname if known
             if client in self.chat:
                 data["name"] = self.chat[client]["name"]
+            ReportingEngine.getSharedInstance().spot(data)
+
+    # Report client activity (connect, disconnect, profile_change, freq_change)
+    def reportClientActivity(self, client, event):
+        pm = Config.get()
+        if pm["report_clients"]:
+            from owrx.reporting import ReportingEngine
+            data = {
+                "mode": "CLIENT_ACTIVITY",
+                "event": event,
+                "timestamp": round(datetime.now().timestamp() * 1000),
+                "ip": self.getIp(client.conn.handler),
+                "username": None,
+                "sdr": None,
+                "profile": None,
+                "freq": None,
+                "offset_freq": None,
+                "mod": None,
+                "clients": self.clientCount()
+            }
+            if client in self.chat:
+                data["username"] = self.chat[client]["name"]
+            if hasattr(client, "sdr") and client.sdr is not None:
+                try:
+                    data["sdr"] = client.sdr.getName()
+                    data["profile"] = client.sdr.getProfileName()
+                    data["freq"] = client.sdr.getProps()["center_freq"]
+                except Exception:
+                    pass
+            if hasattr(client, "dsp") and client.dsp:
+                try:
+                    if client.dsp.chain:
+                        data["offset_freq"] = getattr(client.dsp.chain, "frequencyOffset", 0)
+                    data["mod"] = client.dsp.props["mod"] if "mod" in client.dsp.props else None
+                except Exception:
+                    pass
             ReportingEngine.getSharedInstance().spot(data)
 
     # Report chat message from a client

@@ -433,6 +433,8 @@ class OpenWebRxReceiverClient(OpenWebRxClient, SdrSourceEventClient):
                         if "params" in message:
                             params = message["params"]
                             dsp.setProperties(params)
+                            if "offset_freq" in params:
+                                ClientRegistry.getSharedInstance().reportClientActivity(self, "freq_change")
 
                 elif message["type"] == "setsdr":
                     if "params" in message and "sdr" in message["params"]:
@@ -443,6 +445,7 @@ class OpenWebRxReceiverClient(OpenWebRxClient, SdrSourceEventClient):
                         profile = params["profile"].split("|")
                         key     = params["key"] if "key" in params else None
                         self.setProfile(profile[0], profile[1], key)
+                        ClientRegistry.getSharedInstance().reportClientActivity(self, "profile_change")
                 elif message["type"] == "setfrequency":
                     # If the magic key is set in the settings, only allow
                     # changes if it matches the received key
@@ -453,6 +456,7 @@ class OpenWebRxReceiverClient(OpenWebRxClient, SdrSourceEventClient):
                             key    = params["key"] if "key" in params else None
                             if magic == "" or key == magic:
                                 self.sdr.setCenterFreq(params["frequency"])
+                                ClientRegistry.getSharedInstance().reportClientActivity(self, "freq_change")
                 elif message["type"] == "connectionproperties":
                     if "params" in message:
                         self.connectionProperties = message["params"]
