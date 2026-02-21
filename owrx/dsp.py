@@ -131,12 +131,11 @@ class ClientDemodulatorChain(Chain):
         self.clientAudioChain.setClientRate(outputRate)
 
     def setAgcProfile(self, profile: str):
-        """Set AGC profile on current SSB demodulator (if applicable)."""
+        """Set AGC profile on current demodulator (if it has an AGC module)."""
         if self.demodulator is None:
             return
-        # Find AGC in the demodulator chain
-        from csdr.chain.analog import Ssb
-        if not isinstance(self.demodulator, Ssb):
+        from csdr.chain.analog import Ssb, Am, SAm, NFm
+        if not isinstance(self.demodulator, (Ssb, Am, SAm, NFm)):
             return
         agc_idx = self.demodulator.indexOf(lambda x: isinstance(x, Agc))
         if agc_idx >= 0:
