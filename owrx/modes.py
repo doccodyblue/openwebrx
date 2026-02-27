@@ -165,6 +165,7 @@ class Modes(object):
         DigitalMode("navtex", "NAVTEX", underlying=["usb"], service=True),
         DigitalMode("dsc", "DSC", underlying=["usb"], service=True),
         WsjtMode("ft8", "FT8"),
+        WsjtMode("ft2", "FT2"),
         WsjtMode("ft4", "FT4"),
         WsjtMode("jt65", "JT65"),
         WsjtMode("jt9", "JT9"),

@@ -18,6 +18,7 @@ This fork adds the following customizations on top of OpenWebRX+:
 * **MQTT Client Names** - Client connect/disconnect events now include the user's nickname (if set) for Home Assistant integration. Nicknames are automatically sent to the server on connect (no chat message required).
 * **Restricted Profiles** - Profiles with `restricted=true` are hidden from users without the magic_key in their URL (`#key=xxx`). Configurable via checkbox in Admin Interface under profile settings. Useful for hiding sensitive profiles (e.g., BOS, Marine) from public access while allowing authorized users full access via a shared link. Separate from `key_locked` which prevents switching away from a profile.
 * **Custom Page SEO** - Set custom page title and meta description via Admin Interface (General Settings > Page SEO). Useful for search engine optimization and branding.
+* **FT2 Digital Mode** - Full support for the new experimental FT2 ultra-fast digital mode (3.75s period, QSOs in 7-11 seconds). Requires WSJT-X Improved 3.1.0 with patched `jt9` binary (`--ft2` flag). Includes decoder integration, WSJT message panel, band frequency bookmarks (160m-10m), and PSKReporter spotting.
 
 **Fixes:**
 * New users receive active SDR profile instead of default (no more "profile hijacking")

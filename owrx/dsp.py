@@ -131,11 +131,12 @@ class ClientDemodulatorChain(Chain):
         self.clientAudioChain.setClientRate(outputRate)
 
     def setAgcProfile(self, profile: str):
-        """Set AGC profile on current demodulator (if it has an AGC module)."""
+        """Set AGC profile on current SSB demodulator (if applicable)."""
         if self.demodulator is None:
             return
-        from csdr.chain.analog import Ssb, Am, SAm, NFm
-        if not isinstance(self.demodulator, (Ssb, Am, SAm, NFm)):
+        # Find AGC in the demodulator chain
+        from csdr.chain.analog import Ssb
+        if not isinstance(self.demodulator, Ssb):
             return
         agc_idx = self.demodulator.indexOf(lambda x: isinstance(x, Agc))
         if agc_idx >= 0:
@@ -681,7 +682,7 @@ class DspManager(SdrSourceEventClient, ClientDemodulatorSecondaryDspEventClient)
     def _getSecondaryDemodulator(self, mod) -> Optional[SecondaryDemodulator]:
         if isinstance(mod, SecondaryDemodulator):
             return mod
-        if mod in ["ft8", "wspr", "jt65", "jt9", "ft4", "fst4", "fst4w", "q65"]:
+        if mod in ["ft8", "ft2", "wspr", "jt65", "jt9", "ft4", "fst4", "fst4w", "q65"]:
             from csdr.chain.digimodes import AudioChopperDemodulator
             from owrx.wsjt import WsjtParser
             return AudioChopperDemodulator(mod, WsjtParser())

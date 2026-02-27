@@ -97,6 +97,8 @@ class WsjtProfiles(object):
             return StaticProfileSource([Jt65Profile()])
         elif mode == "jt9":
             return StaticProfileSource([Jt9Profile()])
+        elif mode == "ft2":
+            return StaticProfileSource([Ft2Profile()])
         elif mode == "ft4":
             return StaticProfileSource([Ft4Profile()])
         elif mode == "fst4":
@@ -153,6 +155,17 @@ class Jt9Profile(WsjtProfile):
 
     def getMode(self):
         return "JT9"
+
+
+class Ft2Profile(WsjtProfile):
+    def getInterval(self):
+        return 3.75
+
+    def decoder_commandline(self, file):
+        return ["jt9", "--ft2", "-d", str(self.decoding_depth()), file]
+
+    def getMode(self):
+        return "FT2"
 
 
 class Ft4Profile(WsjtProfile):
