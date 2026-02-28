@@ -4,6 +4,13 @@ OpenWebRX+ DG7LAN Fork
 This fork adds the following customizations on top of OpenWebRX+:
 
 **Features:**
+* **FT2 Digital Mode** *(NEW)* - Full support for the new experimental FT2 ultra-fast digital mode (3.75s period, QSOs in 7-11 seconds). Requires WSJT-X Improved 3.1.0 with patched `jt9` binary (`--ft2` flag). Includes decoder integration, WSJT message panel, band frequency bookmarks (160m-10m), and PSKReporter spotting.
+* **Restricted Profiles** - Profiles with `restricted=true` are hidden from users without the magic_key in their URL (`#key=xxx`). Configurable via checkbox in Admin Interface under profile settings. Useful for hiding sensitive profiles (e.g., BOS, Marine) from public access while allowing authorized users full access via a shared link. Separate from `key_locked` which prevents switching away from a profile.
+* **Custom Page SEO** - Set custom page title and meta description via Admin Interface (General Settings > Page SEO). Useful for search engine optimization and branding.
+* **Persistent Chat History** - Chat messages are stored server-side and sent to new clients, so users see recent conversation history when joining. History survives OpenWebRX restarts (saved to `/var/lib/openwebrx/chat_history.json`).
+* **Nickname Requirement** - Optional setting to require users to enter a nickname/callsign before using the receiver (configurable in Admin Interface)
+* **MQTT Client Names** - Client connect/disconnect events now include the user's nickname (if set) for Home Assistant integration. Nicknames are automatically sent to the server on connect (no chat message required).
+* **IP Whitelist for Timeout** - Exempt specific IPs or CIDR ranges from session timeout (e.g., local network users never get kicked)
 * **SDR Profile Locking** - First user on an SDR becomes "owner" and controls the profile; others can only listen along on the active profile. Prevents users from disrupting each other's reception. Live updates show listener count and ownership status.
 * **NR2 Noise Reduction** - Client-side spectral noise reduction via AudioWorklet with OSMS (Optimally Smoothed Minimum Statistics) noise estimation. Features selectable gain methods (Linear/Log/Gamma), Artifact Elimination filter, VAD-based soft gate with adjustable depth, and NR/DX profile switching (right-click NR button). Advanced settings panel for fine-tuning T1/T2 time constants.
 * **DX Cluster Integration** - Live DX spots with waterfall markers showing spotted stations
@@ -12,13 +19,6 @@ This fork adds the following customizations on top of OpenWebRX+:
 * **Bandpass Reset** - Right-click on USB/LSB buttons to reset filter to defaults (70-3000 Hz)
 * **AGC Profile Switching** - Runtime AGC speed control (Slow/Mid/Fast) via S/M/F buttons for USB/LSB/AM/CW modes
 * **AGC Attack Tuning** - Patched SLOW AGC profile with faster attack to reduce clipping on loud signals
-* **Persistent Chat History** - Chat messages are stored server-side and sent to new clients, so users see recent conversation history when joining. History survives OpenWebRX restarts (saved to `/var/lib/openwebrx/chat_history.json`).
-* **Nickname Requirement** - Optional setting to require users to enter a nickname/callsign before using the receiver (configurable in Admin Interface)
-* **IP Whitelist for Timeout** - Exempt specific IPs or CIDR ranges from session timeout (e.g., local network users never get kicked)
-* **MQTT Client Names** - Client connect/disconnect events now include the user's nickname (if set) for Home Assistant integration. Nicknames are automatically sent to the server on connect (no chat message required).
-* **Restricted Profiles** - Profiles with `restricted=true` are hidden from users without the magic_key in their URL (`#key=xxx`). Configurable via checkbox in Admin Interface under profile settings. Useful for hiding sensitive profiles (e.g., BOS, Marine) from public access while allowing authorized users full access via a shared link. Separate from `key_locked` which prevents switching away from a profile.
-* **Custom Page SEO** - Set custom page title and meta description via Admin Interface (General Settings > Page SEO). Useful for search engine optimization and branding.
-* **FT2 Digital Mode** - Full support for the new experimental FT2 ultra-fast digital mode (3.75s period, QSOs in 7-11 seconds). Requires WSJT-X Improved 3.1.0 with patched `jt9` binary (`--ft2` flag). Includes decoder integration, WSJT message panel, band frequency bookmarks (160m-10m), and PSKReporter spotting.
 
 **Fixes:**
 * New users receive active SDR profile instead of default (no more "profile hijacking")
