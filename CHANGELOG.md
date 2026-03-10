@@ -1,3 +1,25 @@
+**1.2.109**
+- Added separate RADEL and RADEU modes.
+- Added trusted proxies config [Giulio Fieramosca].
+- Added back sound for digital modes.
+- Updated feature installation instructions.
+- Updated integration with latest NRSC5.
+- Updated AcarsDec version check.
+
+**1.2.108**
+- Added 100% UI opacity bump option.
+- Added FreeDV RADEv1 digital voice support.
+- Added SoapyMiri gain stages [Sergei Korolev].
+- Added LimeSDR gain stages [Sergei Korolev].
+
+**1.2.107**
+- Added SnR levels display to the skimmer.
+- Added AGC settings for AM and NFM modes.
+- Fixed DRM metadata display to skip missing items.
+- Fixed sonde speed display on the map.
+- Optimized skimmer window rendering.
+- Renamed CwSkimmer JS class to Skimmer.
+
 **1.2.106**
 - Added more sampling rates for Malahit-R1.
 - Insured IOC576 won't take precedence over IOC288.

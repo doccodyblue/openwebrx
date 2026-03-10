@@ -1,3 +1,34 @@
+openwebrx (1.2.109) bullseye jammy; urgency=low
+
+  * Added separate RADEL and RADEU modes.
+  * Added trusted proxies config [Giulio Fieramosca].
+  * Added back sound for digital modes.
+  * Updated feature installation instructions.
+  * Updated integration with latest NRSC5.
+  * Updated AcarsDec version check.
+
+ -- Marat Fayzullin <luarvique@gmail.com>  Mon, 9 Mar 2026 16:12:00 +0000
+
+openwebrx (1.2.108) bullseye jammy; urgency=low
+
+  * Added 100% UI opacity bump option.
+  * Added FreeDV RADEv1 digital voice support.
+  * Added SoapyMiri gain stages [Sergei Korolev].
+  * Added LimeSDR gain stages [Sergei Korolev].
+
+ -- Marat Fayzullin <luarvique@gmail.com>  Mon, 2 Mar 2026 16:12:00 +0000
+
+openwebrx (1.2.107) bullseye jammy; urgency=low
+
+  * Added SnR levels display to the skimmer.
+  * Added AGC settings for AM and NFM modes.
+  * Fixed DRM metadata display to skip missing items.
+  * Fixed sonde speed display on the map.
+  * Optimized skimmer window rendering.
+  * Renamed CwSkimmer JS class to Skimmer.
+
+ -- Marat Fayzullin <luarvique@gmail.com>  Mon, 16 Feb 2026 16:12:00 +0000
+
 openwebrx (1.2.106) bullseye jammy; urgency=low
 
   * Added more sampling rates for Malahit-R1.
