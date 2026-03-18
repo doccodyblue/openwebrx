@@ -788,13 +788,11 @@ class DspManager(SdrSourceEventClient, ClientDemodulatorSecondaryDspEventClient)
             from csdr.chain.sonde import Mts01Demodulator
             return Mts01Demodulator()
         elif mod == "sonde-rs41":
-            # Use our custom radiosonde chain (includes AGC + FSK pipeline)
-            from csdr.chain.radiosonde import Rs41Demodulator
+            from csdr.chain.sonde import Rs41Demodulator
             return Rs41Demodulator()
         elif mod == "sonde-dfm9" or mod == "sonde-dfm17":
-            # Use our custom radiosonde chain
-            from csdr.chain.radiosonde import Dfm09Demodulator
-            return Dfm09Demodulator()
+            from csdr.chain.sonde import Dfm9Demodulator
+            return Dfm9Demodulator()
         elif mod == "sonde-m10":
             from csdr.chain.sonde import M10Demodulator
             return M10Demodulator()
