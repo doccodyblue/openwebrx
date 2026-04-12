@@ -87,7 +87,7 @@ Chat.recvMessage = function(nickname, text, color = 'white', timestamp = null) {
     var time = timestamp ? timestamp : Date.now();
 
     divlog(
-        Utils.HHMMSS(time) + '&nbsp;['
+        Utils.HHMMSS(time, true) + '&nbsp;['
       + '<span class="chatname" style="color:' + color + ';">'
       + Utils.htmlEscape(nickname) + '</span>]:&nbsp;'
       + '<span class="chatmessage">' + Utils.htmlEscape(text)
