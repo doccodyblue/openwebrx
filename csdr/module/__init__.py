@@ -25,6 +25,10 @@ class Module(BaseModule, metaclass=ABCMeta):
     def setWriter(self, writer: Writer) -> None:
         self.writer = writer
 
+    def stop(self):
+        self.reader = None
+        self.writer = None
+
     @abstractmethod
     def getInputFormat(self) -> Format:
         pass
@@ -166,7 +170,6 @@ class JsonParser(LineBasedModule):
         try:
             msg = json.loads(line)
             msg["mode"] = self.mode
-#            logger.debug(msg)
             return msg
         except json.JSONDecodeError:
             logger.exception("error parsing decoder json")
