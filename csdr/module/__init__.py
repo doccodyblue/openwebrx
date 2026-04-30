@@ -83,7 +83,9 @@ class ThreadModule(AutoStartModule, Thread, metaclass=ABCMeta):
 
     def stop(self):
         self.doRun = False
-        self.reader.stop()
+        if self.reader is not None:
+            self.reader.stop()
+        super().stop()
 
     def start(self):
         # don't start twice.
@@ -198,8 +200,9 @@ class PopenModule(AutoStartModule, metaclass=ABCMeta):
             except TimeoutExpired:
                 self.process.kill()
             self.process = None
-        self.reader.stop()
-
+        if self.reader is not None:
+            self.reader.stop()
+        super().stop()
 
 class LogReader(Thread):
     def __init__(self, prefix: str, buffer: Buffer):
@@ -228,4 +231,6 @@ class LogReader(Thread):
                 self.logger.info("{}: {}".format("STDOUT", line.decode(errors="replace")))
 
     def stop(self):
-        self.reader.stop()
+        if self.reader is not None:
+            self.reader.stop()
+            self.reader = None
