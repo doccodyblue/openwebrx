@@ -461,7 +461,7 @@ class OpenWebRxReceiverClient(OpenWebRxClient, SdrSourceEventClient):
                                 ClientRegistry.getSharedInstance().reportClientActivity(self, "freq_change")
                 elif message["type"] == "connectionproperties":
                     if "params" in message:
-                        self.connectionProperties = message["params"]
+                        self.connectionProperties.update(message["params"])
                         if self.dsp:
                             self.getDsp().setProperties(self.connectionProperties)
                 elif message["type"] == "sendmessage":
