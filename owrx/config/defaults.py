@@ -376,6 +376,7 @@ defaultConfig = PropertyLayer(
     vessel_url="https://www.vesselfinder.com/vessels/details/{}",
     flight_url="https://flightaware.com/live/flight/{}",
     modes_url="https://flightaware.com/live/modes/{}/redirect",
+    geoip_url="https://www.geolocation.com/?ip={}#ipresult",
     usage_policy_url="policy",
     session_timeout=0,
     timeout_exempt_ips="",

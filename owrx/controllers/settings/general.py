@@ -384,6 +384,13 @@ class GeneralSettingsController(SettingsFormController):
                     + "allowing to look up aircraft by their Mode-S codes. Place curly "
                     + "brackets ({}) where aircraft Mode-S code is supposed to be.",
                 ),
+                TextInput(
+                    "geoip_url",
+                    "IP geolocation URL",
+                    infotext="Specifies IP geolocation URL, such as GEOLOCATION.COM, "
+                    + "allowing to estimate geographic locations of IP addresses. "
+                    + "Place curly brackets ({}) where IP is supposed to be.",
+                ),
             ),
             Section(
                 "Change password for '{0}'".format(self.user.name),
