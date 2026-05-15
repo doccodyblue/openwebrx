@@ -122,8 +122,9 @@ class OpenWebRxClient(Client, metaclass=ABCMeta):
 
             # Get client IP
             client_ip = self.conn.handler.client_address[0]
-            # Check for X-Forwarded-For if behind proxy
-            if ip_address(client_ip).is_private and hasattr(self.conn.handler, "headers"):
+            # Check for X-Forwarded-For if behind proxy (loopback covers Varnish/Nginx chain)
+            client_ip_obj = ip_address(client_ip)
+            if (client_ip_obj.is_private or client_ip_obj.is_loopback) and hasattr(self.conn.handler, "headers"):
                 if "x-forwarded-for" in self.conn.handler.headers:
                     client_ip = self.conn.handler.headers['x-forwarded-for'].split(',')[0].strip()
 

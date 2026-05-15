@@ -296,8 +296,9 @@ class ClientRegistry(object):
         trusted = CoreConfig().get_web_trusted_proxies()
         ip = handler.client_address[0]
         # Parse X-Forwarded-For header when incoming connection is
-        # from a local address or a trusted proxy
-        if ip_address(ip).is_private or (trusted is not None and ip in trusted):
+        # from a local address, loopback, or a trusted proxy
+        ip_obj = ip_address(ip)
+        if ip_obj.is_private or ip_obj.is_loopback or (trusted is not None and ip in trusted):
             if hasattr(handler, "headers") and "x-forwarded-for" in handler.headers:
                 ip = handler.headers['x-forwarded-for'].split(',')[0]
         # Done
