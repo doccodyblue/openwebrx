@@ -76,6 +76,13 @@
     <button id="mode2P">2 Spieler</button>
   </div>
 
+  <div class="mode" id="diffRow">
+    <span>Stärke:</span>
+    <button id="diffEasy">Leicht</button>
+    <button id="diffMed" class="active">Mittel</button>
+    <button id="diffHard">Schwer</button>
+  </div>
+
   <div class="status" id="status">Du bist am Zug (X)</div>
 
   <div class="board" id="board"></div>
@@ -109,6 +116,7 @@
   ];
 
   let board, current, gameOver, vsAI = true;
+  let difficulty = 'med'; // 'easy' | 'med' | 'hard'
   let score = { X: 0, O: 0, D: 0 };
 
   function init() {
@@ -153,15 +161,35 @@
 
   function aiMove() {
     if (gameOver) return;
-    const best = bestMove();
-    board[best] = AI;
+    const move = chooseMove();
+    board[move] = AI;
     if (checkEnd()) return;
     current = HUMAN;
     render();
     setStatus('Du bist am Zug (X)');
   }
 
-  // Minimax — der Computer ist unschlagbar
+  function emptyCells() {
+    const c = [];
+    for (let i = 0; i < 9; i++) if (!board[i]) c.push(i);
+    return c;
+  }
+
+  function randomMove() {
+    const c = emptyCells();
+    return c[Math.floor(Math.random() * c.length)];
+  }
+
+  // Wähle den Zug je nach Schwierigkeit.
+  // Leicht: immer zufällig. Mittel: meistens perfekt, aber manchmal ein
+  // Fehler (damit man gewinnen kann). Schwer: immer perfekt (unschlagbar).
+  function chooseMove() {
+    if (difficulty === 'easy') return randomMove();
+    if (difficulty === 'med' && Math.random() < 0.45) return randomMove();
+    return bestMove();
+  }
+
+  // Minimax — der perfekte (unschlagbare) Zug
   function bestMove() {
     let bestScore = -Infinity, move = -1;
     for (let i = 0; i < 9; i++) {
@@ -246,6 +274,20 @@
     vsAI = ai;
     modeAIBtn.classList.toggle('active', ai);
     mode2PBtn.classList.toggle('active', !ai);
+    document.getElementById('diffRow').style.display = ai ? '' : 'none';
+    score = { X: 0, O: 0, D: 0 };
+    updateScore();
+    init();
+  }
+
+  const diffBtns = {
+    easy: document.getElementById('diffEasy'),
+    med: document.getElementById('diffMed'),
+    hard: document.getElementById('diffHard')
+  };
+  function setDifficulty(level) {
+    difficulty = level;
+    Object.keys(diffBtns).forEach(k => diffBtns[k].classList.toggle('active', k === level));
     score = { X: 0, O: 0, D: 0 };
     updateScore();
     init();
@@ -253,6 +295,9 @@
 
   modeAIBtn.addEventListener('click', () => setMode(true));
   mode2PBtn.addEventListener('click', () => setMode(false));
+  diffBtns.easy.addEventListener('click', () => setDifficulty('easy'));
+  diffBtns.med.addEventListener('click', () => setDifficulty('med'));
+  diffBtns.hard.addEventListener('click', () => setDifficulty('hard'));
   restartBtn.addEventListener('click', init);
 
   init();
