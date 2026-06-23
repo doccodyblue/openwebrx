@@ -63,6 +63,19 @@
     display: flex; gap: 22px; font-size: 1rem; font-weight: 600;
   }
   .score span b { font-size: 1.3rem; display: block; text-align: center; }
+
+  .egg {
+    min-height: 0; max-width: min(90vw, 360px); text-align: center;
+    color: #6fe3da; font-family: "Courier New", monospace; font-size: .95rem;
+    line-height: 1.4; letter-spacing: .5px;
+    opacity: 0; transition: opacity .4s; overflow: hidden;
+  }
+  .egg.show { opacity: 1; }
+  .egg .cursor {
+    display: inline-block; width: .55ch; background: #6fe3da;
+    animation: blink 1s steps(1) infinite; margin-left: 1px;
+  }
+  @keyframes blink { 50% { opacity: 0; } }
   .score .sx b { color: #ff6b6b; }
   .score .so b { color: #4ecdc4; }
 </style>
@@ -87,6 +100,8 @@
 
   <div class="board" id="board"></div>
 
+  <div class="egg" id="egg"></div>
+
   <div class="score">
     <span class="sx">X<b id="scoreX">0</b></span>
     <span>Unentschieden<b id="scoreD">0</b></span>
@@ -107,6 +122,7 @@
   const scoreXEl = document.getElementById('scoreX');
   const scoreOEl = document.getElementById('scoreO');
   const scoreDEl = document.getElementById('scoreD');
+  const eggEl = document.getElementById('egg');
 
   const HUMAN = 'X', AI = 'O';
   const WINS = [
@@ -123,6 +139,7 @@
     board = Array(9).fill('');
     current = 'X';
     gameOver = false;
+    hideEgg();
     render();
     setStatus(vsAI ? 'Du bist am Zug (X)' : 'Spieler X ist am Zug');
   }
@@ -139,6 +156,27 @@
   }
 
   function setStatus(text) { statusEl.textContent = text; }
+
+  // WarGames-Easter-Egg: WOPR/Joshua tippt seine Erkenntnis aus.
+  let eggTimer = null;
+  function hideEgg() {
+    if (eggTimer) { clearTimeout(eggTimer); eggTimer = null; }
+    eggEl.classList.remove('show');
+    eggEl.innerHTML = '';
+  }
+  function playEgg() {
+    const text = 'A STRANGE GAME.\nTHE ONLY WINNING MOVE IS NOT TO PLAY.';
+    eggEl.classList.add('show');
+    let i = 0;
+    (function type() {
+      const shown = text.slice(0, i).replace(/\n/g, '<br>');
+      eggEl.innerHTML = shown + '<span class="cursor">&nbsp;</span>';
+      if (i < text.length) {
+        i++;
+        eggTimer = setTimeout(type, 55);
+      }
+    })();
+  }
 
   function handleMove(i) {
     if (gameOver || board[i]) return;
@@ -259,6 +297,7 @@
       score.D++; updateScore();
       render();
       setStatus('Unentschieden 🤝');
+      if (vsAI && difficulty === 'hard') playEgg();
       return true;
     }
     return false;
