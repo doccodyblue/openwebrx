@@ -151,6 +151,7 @@ class Modes(object):
         AnalogMode("ysf", "YSF", bandpass=Bandpass(-6250, 6250), requirements=["digital_voice_digiham"], squelch=False),
         AnalogMode("m17", "M17", bandpass=Bandpass(-6250, 6250), requirements=["digital_voice_m17"], squelch=False),
         AnalogMode("freedv", "FreeDV", bandpass=Bandpass(300, 3000), requirements=["digital_voice_freedv"], squelch=False),
+        AnalogMode("tetra", "TETRA", bandpass=Bandpass(-12500, 12500), requirements=["tetra"], squelch=False),
         AnalogMode("radel", "RADEL", bandpass=Bandpass(-3000, -300), requirements=["digital_voice_rade"], squelch=False),
         AnalogMode("radeu", "RADEU", bandpass=Bandpass(300, 3000), requirements=["digital_voice_rade"], squelch=False),
         AnalogMode("drm", "DRM", bandpass=Bandpass(-5000, 5000), requirements=["drm"], squelch=False),
@@ -338,7 +339,68 @@ class Modes(object):
             squelch=False,
             secondaryFft=False
         ),
-        # Radiosonde decoders for weather balloon tracking
+        # LoRa modes
+        DigitalMode(
+            "lora-wan",
+            "LoRa WAN",
+            underlying=["empty"],
+            bandpass=None,
+            ifRate=1000000,
+            requirements=["lora"],
+            service=True,
+            squelch=True
+        ),
+        DigitalMode(
+            "lora-aprs",
+            "LoRa APRS",
+            underlying=["empty"],
+            bandpass=None,
+            ifRate=1000000,
+            requirements=["lora"],
+            service=True,
+            squelch=True
+        ),
+        DigitalMode(
+            "lora-fanet",
+            "LoRa FANET",
+            underlying=["empty"],
+            bandpass=None,
+            ifRate=1000000,
+            requirements=["lora"],
+            service=True,
+            squelch=True
+        ),
+        DigitalMode(
+            "meshtastic",
+            "Meshtastic",
+            underlying=["empty"],
+            bandpass=None,
+            ifRate=1000000,
+            requirements=["meshtastic"],
+            service=True,
+            squelch=True
+        ),
+        DigitalMode(
+            "meshcore",
+            "Meshcore",
+            underlying=["empty"],
+            bandpass=None,
+            ifRate=1000000,
+            requirements=["lora"],
+            service=True,
+            squelch=True
+        ),
+        DigitalMode(
+            "meshcom",
+            "MeshCom",
+            underlying=["empty"],
+            bandpass=None,
+            ifRate=1000000,
+            requirements=["lora"],
+            service=True,
+            squelch=True
+        ),
+        # Radiosonde modes
         DigitalMode(
             "sonde-rs41",
             "Sonde RS41",

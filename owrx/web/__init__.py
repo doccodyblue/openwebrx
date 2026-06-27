@@ -71,27 +71,25 @@ class WebAgent(object):
     def stopThread(self):
         if self.thread is not None:
             logger.info("Stopping {0} database thread.".format(type(self).__name__))
-            self.event.set()
-            self.thread.join()
             self.thread = None
+            self.event.set()
 
     # This is the actual thread function
     def _refreshThread(self):
         # Random time to refresh data
         refreshMinute = random.randint(5, 49)
         # Main Loop
-        while not self.event.is_set():
+        while self.thread is not None and not self.event.is_set():
             # Wait until the check-and-update time
             waitMinutes = refreshMinute - datetime.utcnow().minute
             waitMinutes = waitMinutes + 60 if waitMinutes <= 0 else waitMinutes
             self.event.wait(waitMinutes * 60)
-            # Check if we need to exit
-            if self.event.is_set():
-                break
             # Check and refresh cached database as needed
-            self.refresh()
+            if self.thread is not None and not self.event.is_set():
+                self.refresh()
         # Done with the thread
         self.thread = None
+        logger.info("Stopped {0} database thread.".format(type(self).__name__))
 
     # Refresh database from the web.
     def refresh(self):
@@ -169,3 +167,27 @@ class WebAgent(object):
     def _loadFromWeb(self):
         # Fill in your own method
         return []
+
+    # Search sorted frequency list via bisection
+    def _bisect_left(self, freq):
+        lo = 0
+        hi = len(self.data)
+        while lo < hi:
+            x = (lo + hi) // 2
+            if self.data[x]["freq"] < freq:
+                lo = x + 1
+            else:
+                hi = x
+        return lo
+
+    # Search sorted frequency list via bisection
+    def _bisect_right(self, freq):
+        lo = 0
+        hi = len(self.data)
+        while lo < hi:
+            x = (lo + hi) // 2
+            if freq < self.data[x]["freq"]:
+                hi = x
+            else:
+                lo = x + 1
+        return lo

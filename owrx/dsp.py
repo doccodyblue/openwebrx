@@ -642,6 +642,9 @@ class DspManager(SdrSourceEventClient, ClientDemodulatorSecondaryDspEventClient)
         elif demod == "nxdn":
             from csdr.chain.digiham import Nxdn
             return Nxdn(self.props["digital_voice_codecserver"])
+        elif demod == "tetra":
+            from csdr.chain.tetra import Tetra
+            return Tetra()
         elif demod == "hdr":
             from csdr.chain.hdradio import HdRadio
             return HdRadio()
@@ -797,6 +800,24 @@ class DspManager(SdrSourceEventClient, ClientDemodulatorSecondaryDspEventClient)
         elif mod == "uat":
             from csdr.chain.aircraft import UatDemodulator
             return UatDemodulator()
+        elif mod == "lora-wan":
+            from csdr.chain.lora import LoraWanDemodulator
+            return LoraWanDemodulator()
+        elif mod == "lora-aprs":
+            from csdr.chain.lora import LoraAprsDemodulator
+            return LoraAprsDemodulator()
+        elif mod == "lora-fanet":
+            from csdr.chain.lora import LoraFanetDemodulator
+            return LoraFanetDemodulator()
+        elif mod == "meshtastic":
+            from csdr.chain.lora import MeshtasticDemodulator
+            return MeshtasticDemodulator()
+        elif mod == "meshcore":
+            from csdr.chain.lora import MeshcoreDemodulator
+            return MeshcoreDemodulator()
+        elif mod == "meshcom":
+            from csdr.chain.lora import MeshComDemodulator
+            return MeshComDemodulator()
         elif mod == "sonde-mts01":
             from csdr.chain.sonde import Mts01Demodulator
             return Mts01Demodulator()

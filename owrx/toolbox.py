@@ -6,9 +6,9 @@ from csdr.module import ThreadModule, LineBasedModule
 from pycsdr.types import Format
 from owrx.dsame3.dsame import same_decode_string
 from datetime import datetime, timezone
-import pickle
-import re
+
 import json
+import re
 
 import logging
 
@@ -372,4 +372,3 @@ class EasParser(TextParser):
 
         # Return received message as text
         return "\n".join(out)
-

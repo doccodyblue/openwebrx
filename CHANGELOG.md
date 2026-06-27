@@ -1,3 +1,65 @@
+**1.2.117**
+- Added unencrypted Tetra support [Yiannis Sam].
+- Added support for ELAD FDM-S2 [DisagioDigitale].
+- Added ARINC622 payload parsing inside ACARS.
+- Added CPDLC payload parsing inside ACARS.
+- Added ADS-C payload parsing inside ACARS.
+- Added parsing ACARS legacy position reports.
+- Added ACARS parsing inside VDL2 and HFDL.
+- Added airplane temperature, wind, route display.
+- Added options to drop ACARS and VDL2 acks.
+- Added options for LoRa decoder bandwidths.
+- Made Meshtastic map objects use regular TTL.
+- Fixed flickering horizontal waterfall lines.
+- Fixed web agent threads hanging on exit.
+
+**1.2.116**
+- Added LoRa Meshtastic parser [Stanislav Lechev].
+- Added LoRa APRS parser [Stefan DC4HF].
+- Added Sondehub reporter for RS41 telemetry [Hai Tran].
+- Added paho-mqtt 2.0 compatibility [Marc Fontaine].
+- Added per-profile PPM correction option.
+- Fixed exception when stopping AdsbParser.
+- Fixed exception when stopping services.
+
+**1.2.115**
+- Added [T] shortcut to enter frequency [Rene Jaun].
+- Added [P] shortcut to select profile [Rene Jaun].
+- Added LoRa bands and frequencies [Stefan DC4HF].
+- Added MeshCom LoRa mode [Stefan DC4HF].
+- Added link to Android app.
+- Fixed single-stepping from unaligned frequency.
+- Fixed secondary sampling rate for services.
+- Fixed background audio recording rate to 128ksps.
+- Fixed weather RTTY bookmarks, removed duplicates
+- Optimized LoRa decoder invocations [Stefan DC4HF].
+- Updated feature install instructions.
+- Moved LoRa to its own source files.
+- Made more web assets zippable.
+
+**1.2.114**
+- Integrated dxlAPRS LoraRX tool.
+- Added LoRa WAN, LoRa APRS, and FANET modes.
+- Added LoRa Meshtastic and Meshcore modes.
+- Added setting for IP geolocation URL.
+- Added setting for the help page URL.
+- Blocked center frequency changes to <0Hz.
+- Updated IP geolocation URL since it changed.
+- Allowed more characters in WiFi SSIDs.
+- Escaped HTML entities in input field values.
+
+**1.2.113**
+- Greatly reduced memory footprint, eliminating leaks.
+- Now dropping unused modules and buffers immediately.
+- Fixed RigControl frequency at page load [Niccolo Izzo].
+- Fixed wrong audio rate when changing SDR source.
+- Fixed markers update thread hanging on exit.
+- Fixed ring buffers leaking from services.
+
+**1.2.112**
+- Fixed bookmarks sorting with older Python versions.
+- Improve JS plugin loader [Stanislav Lechev].
+
 **1.2.111**
 - Added support for the Amateur Repeater Directory (US only).
 - Added selection of the actual PerseusSDR sample rates.
