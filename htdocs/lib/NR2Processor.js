@@ -418,17 +418,29 @@ class NR2Processor extends AudioWorkletProcessor {
         // At 48kHz/512 FFT: bin = freq / 93.75
         // Bin 1 = ~94Hz, Bin 3 = ~280Hz, Bin 16 = ~1500Hz, Bin 21 = ~2000Hz
         if (this.profile === 'dx') {
-            // DX mode: Speech clarity boost 300-2000 Hz (+6dB)
-            // Helps understand weak signals
-            const eqLowBin = 3;
-            const eqHighBin = 21;
-            const eqBoost = 2.0;  // +6dB
-            for (let k = eqLowBin; k <= eqHighBin && k < this.numBins; k++) {
-                this.real[k] *= eqBoost;
-                this.imag[k] *= eqBoost;
-                if (k > 0 && k < this.numBins - 1) {
-                    this.real[N - k] *= eqBoost;
-                    this.imag[N - k] *= eqBoost;
+            // DX mode: schmaler Sprach-Presence-Charakter für Verständlichkeit schwacher Signale.
+            // Bandpass-artig statt Breitband-Boost: Bass/Brumm raus, Sprachzentrum (~650-2400Hz)
+            // kräftig anheben, Höhen raus. Der Cut außen kompensiert die Mittenanhebung
+            // -> markanter, "schmaler" Klang OHNE den Gesamtpegel über 0 dBFS zu treiben.
+            // Bin = freq / 93.75 Hz @ 48kHz/512.
+            for (let k = 1; k < this.numBins; k++) {
+                let eqGain = 1.0;
+                if (k <= 3) {
+                    eqGain = 0.45;   // <~330Hz: Bass/Brumm stark raus
+                } else if (k >= 4 && k <= 6) {
+                    eqGain = 0.8;    // ~375-560Hz: Grundton leicht absenken
+                } else if (k >= 7 && k <= 26) {
+                    eqGain = 1.5;    // ~650-2440Hz: Sprachzentrum/Konsonanten anheben (+3.5dB)
+                } else if (k >= 27) {
+                    eqGain = 0.6;    // >2.5kHz: Zischen/Rauschen raus
+                }
+                if (eqGain !== 1.0) {
+                    this.real[k] *= eqGain;
+                    this.imag[k] *= eqGain;
+                    if (k > 0 && k < this.numBins - 1) {
+                        this.real[N - k] *= eqGain;
+                        this.imag[N - k] *= eqGain;
+                    }
                 }
             }
         } else {
@@ -439,13 +451,13 @@ class NR2Processor extends AudioWorkletProcessor {
                 let eqGain = 1.0;
                 if (k <= 2) {
                     // Bass boost: bins 1-2 (~94-188Hz)
-                    eqGain = 1.4;  // +3dB
+                    eqGain = 1.15;  // +1.2dB (war 1.4/+3dB -> Headroom)
                 } else if (k >= 16 && k <= 21) {
                     // Cut harsh range: bins 16-21 (~1.5-2kHz)
-                    eqGain = 0.8;  // -2dB
+                    eqGain = 0.85;  // -1.4dB
                 } else if (k >= 3 && k <= 8) {
                     // Slight warmth: bins 3-8 (~280-750Hz)
-                    eqGain = 1.15;  // +1.2dB
+                    eqGain = 1.08;  // +0.7dB (war 1.15/+1.2dB)
                 }
                 if (eqGain !== 1.0) {
                     this.real[k] *= eqGain;
@@ -524,8 +536,10 @@ class NR2Processor extends AudioWorkletProcessor {
             this.gateOpen = false;
         }
 
-        // Level compensation: +6dB at max NR to compensate for filtered energy loss + gate
-        const makeupGain = 1 + this.amount * 1.0;  // 1.0 to 2.0 (+0 to +6dB)
+        // Level compensation: sanft, nur leichter NR-Verlust auszugleichen.
+        // War 1 + amount*1.0 (+6dB) -> übersteuerte den Limiter (Verzerrung).
+        // DX hebt schon per EQ-Boost an -> dort KEIN makeup (sonst preLim > 0 dBFS).
+        const makeupGain = this.profile === 'dx' ? 1.0 : (1 + this.amount * 0.25);
 
         // VAD gate based on spectral crest factor - depth controlled by gateDepth slider
         // gateDepth: 0.0 = no gate, 1.0 = full gate
@@ -541,17 +555,15 @@ class NR2Processor extends AudioWorkletProcessor {
             if (this.samplesIn > N) {
                 if (this.enabled) {
                     // Apply NR output with makeup gain and soft gate
-                    let sample = this.outputRing[this.readIdx] * makeupGain * this.gateGain;
-                    // Soft limiter - DX mode needs harder compression due to EQ boost
-                    if (this.profile === 'dx') {
-                        // DX: engage at 0.5, compress hard (0.12 ratio)
-                        if (sample > 0.5) sample = 0.5 + (sample - 0.5) * 0.12;
-                        else if (sample < -0.5) sample = -0.5 + (sample + 0.5) * 0.12;
-                    } else {
-                        // Easy: engage at 0.7, moderate compression
-                        if (sample > 0.7) sample = 0.7 + (sample - 0.7) * 0.2;
-                        else if (sample < -0.7) sample = -0.7 + (sample + 0.7) * 0.2;
-                    }
+                    const nrSample = this.outputRing[this.readIdx];
+                    let sample = nrSample * makeupGain * this.gateGain;
+                    // Soft limiter als Clipping-Schutz nahe 0 dBFS (Headroom statt Dauer-Limiting).
+                    // Einheitliche Schwelle 0.9 (-0.9dBFS), sanftes Knie, hartes Cap bei 0.98.
+                    const limThr = 0.9;
+                    if (sample > limThr) sample = limThr + (sample - limThr) * 0.2;
+                    else if (sample < -limThr) sample = -limThr + (sample + limThr) * 0.2;
+                    if (sample > 0.98) sample = 0.98;
+                    else if (sample < -0.98) sample = -0.98;
                     out[i] = sample;
                 } else {
                     out[i] = this.inputRing[(this.readIdx + N) % N2];

@@ -117,7 +117,7 @@ AudioEngine.prototype._start = function() {
         // Load both AudioProcessor and NR2Processor
         Promise.all([
             me.audioContext.audioWorklet.addModule('static/lib/AudioProcessor.js'),
-            me.audioContext.audioWorklet.addModule('static/lib/NR2Processor.js?v=1768127306').catch(function(e) {
+            me.audioContext.audioWorklet.addModule('static/lib/NR2Processor.js?v=1768127400').catch(function(e) {
                 console.warn('NR2Processor not available:', e);
                 return null;
             })
