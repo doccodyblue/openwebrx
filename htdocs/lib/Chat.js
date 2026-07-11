@@ -86,8 +86,14 @@ Chat.recvMessage = function(nickname, text, color = 'white', timestamp = null) {
     // Use provided timestamp or current time
     var time = timestamp ? timestamp : Date.now();
 
+    // Format timestamp as "dd.mm. hh:mm" (local time)
+    var d = (time instanceof Date) ? time : new Date(time);
+    var pad = function(i) { return ('' + i).padStart(2, '0'); };
+    var stamp = pad(d.getDate()) + '.' + pad(d.getMonth() + 1) + '.&nbsp;'
+              + pad(d.getHours()) + ':' + pad(d.getMinutes());
+
     divlog(
-        Utils.HHMMSS(time, true) + '&nbsp;['
+        stamp + '&nbsp;['
       + '<span class="chatname" style="color:' + color + ';">'
       + Utils.htmlEscape(nickname) + '</span>]:&nbsp;'
       + '<span class="chatmessage">' + Utils.htmlEscape(text)
