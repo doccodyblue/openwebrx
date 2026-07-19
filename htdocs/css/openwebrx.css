@@ -2580,3 +2580,27 @@ img.openwebrx-mirror-img
     background-color: #ffffff;
     color: #000000;
 }
+
+#openwebrx-dialog-search-bookmarks .search-result {
+    cursor: pointer;
+}
+
+#openwebrx-dialog-search-bookmarks .search-result:hover td {
+    background-color: #cfe8ff;
+}
+
+#openwebrx-dialog-search-bookmarks .search-profile {
+    display: inline-block;
+    margin-left: 6px;
+    padding: 0 5px;
+    border-radius: 3px;
+    background-color: #d0d0d0;
+    color: #333;
+    font-size: 0.85em;
+    vertical-align: middle;
+}
+
+#openwebrx-dialog-search-bookmarks .search-profile.locked {
+    background-color: #e0b0b0;
+    color: #600;
+}

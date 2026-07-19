@@ -55,6 +55,41 @@ function getMagicKeyFromUrl() {
     return match ? match[1] : null;
 }
 
+// Cross-Profil-Bookmark-Sprung: gemerkter Tune, bis das Zielprofil aktiv ist
+var pendingBookmarkTune = null;
+var pendingBookmarkTimer = null;
+function setPendingBookmarkTune(b) {
+    pendingBookmarkTune = b;
+    if (pendingBookmarkTimer) clearTimeout(pendingBookmarkTimer);
+    // Sicherheitsnetz: falls der Wechsel serverseitig abgelehnt wird, nicht ewig warten
+    pendingBookmarkTimer = setTimeout(function(){ pendingBookmarkTune = null; }, 5000);
+}
+
+// Ist ein Ziel-Profil gerade blockiert? (belegt durch anderen Client, oder key_locked ohne Key)
+function isProfileBlocked(sdrId, profileId, keyLocked) {
+    var target = sdrId + '|' + profileId;
+    var isOwned = ownedSdrs.indexOf(sdrId) >= 0;
+    var isBusy = busySdrs[sdrId] && busySdrs[sdrId] > 0;
+    var isActiveProfile = activeProfiles[sdrId] === target;  // Mithören/Aufspringen erlaubt
+    var magicKey = UI.getDemodulatorPanel().getMagicKey();
+    if (keyLocked && !magicKey) return true;
+    if (isBusy && !isOwned && !isActiveProfile) return true;
+    return false;
+}
+
+// Profil per WS wechseln (wie sdr_profile_changed, aber mit explizitem Wert)
+function switchToProfile(value) {
+    var key = UI.getDemodulatorPanel().getMagicKey();
+    ws.send(JSON.stringify({ "type": "selectprofile", "params": { "profile": value, "key": key } }));
+}
+
+// Volle Bookmark-Liste (profilübergreifend) für die Suche vom Server anfordern
+function requestAllBookmarks() {
+    if (typeof ws !== 'undefined' && ws) {
+        ws.send(JSON.stringify({ "type": "getallbookmarks" }));
+    }
+}
+
 function updateSdrUsersLock(newBusySdrs, newOwnedSdrs, newActiveProfiles) {
     busySdrs = newBusySdrs || {};
     ownedSdrs = newOwnedSdrs || [];
@@ -1078,6 +1113,26 @@ function on_ws_recv(evt) {
 
                         waterfall_init();
 
+                        // Cross-Profil-Bookmark: Sprungfrequenz direkt als Startparameter des neuen
+                        // Profils setzen, damit der Demodulator gleich richtig startet. Das vermeidet
+                        // das Race mit der Profil-Standardfrequenz beim SDR-Wechsel (neues Gerät braucht
+                        // Anlaufzeit, sonst gewinnt der Default). center_freq/bandwidth sind hier bereits
+                        // auf die neuen Profilwerte gesetzt (siehe oben).
+                        if (pendingBookmarkTune && 'center_freq' in config && 'samp_rate' in config) {
+                            var _pb = pendingBookmarkTune;
+                            if (_pb.frequency >= center_freq - bandwidth / 2 && _pb.frequency <= center_freq + bandwidth / 2) {
+                                initial_demodulator_params['mod'] = _pb.modulation;
+                                if (_pb.underlying) {
+                                    initial_demodulator_params['secondary_mod'] = _pb.underlying;
+                                } else {
+                                    delete initial_demodulator_params['secondary_mod'];
+                                }
+                                initial_demodulator_params['offset_frequency'] = _pb.frequency - center_freq;
+                                pendingBookmarkTune = null;
+                                if (pendingBookmarkTimer) { clearTimeout(pendingBookmarkTimer); pendingBookmarkTimer = null; }
+                            }
+                        }
+
                         var demodulatorPanel = UI.getDemodulatorPanel();
 
                         demodulatorPanel.setCenterFrequency(center_freq);
@@ -1274,6 +1329,9 @@ function on_ws_recv(evt) {
                         break;
                     case "bookmarks":
                         bookmarks.replace_bookmarks(json['value'], "server");
+                        break;
+                    case "allbookmarks":
+                        bookmarks.replaceAllServerBookmarks(json['value']);
                         break;
                     case "dxspots":
                         if (typeof dxCluster !== "undefined" && dxCluster) {

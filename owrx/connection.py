@@ -419,6 +419,47 @@ class OpenWebRxReceiverClient(OpenWebRxClient, SdrSourceEventClient):
                 owned_sdrs.append(sdr_id)
         self.send({"type": "profiles", "value": profiles, "active": active, "busy_sdrs": busy_sdrs, "owned": owned_sdrs, "active_profiles": active_profiles})
 
+    @staticmethod
+    def _resolveProfileForFrequency(sources, freq):
+        # Find an SDR profile whose visible band covers this frequency, so the
+        # client can jump across profiles. Returns (sdr_id, profile_id, name, locked).
+        for sdr_id, source in sources.items():
+            try:
+                profiles = source.getProfiles()
+            except Exception:
+                continue
+            for profile_id, profile in profiles.items():
+                if "center_freq" not in profile or "samp_rate" not in profile:
+                    continue
+                cf = profile["center_freq"]
+                sr = profile["samp_rate"]
+                if cf - sr / 2 <= freq <= cf + sr / 2:
+                    name = profile["name"] if "name" in profile else profile_id
+                    try:
+                        locked = source.isLocked(profile_id)
+                    except Exception:
+                        locked = False
+                    return (sdr_id, profile_id, name, locked)
+        return None
+
+    def sendAllBookmarks(self):
+        # Send the full, profile-independent bookmark list for the search dialog.
+        # Each bookmark is annotated with the SDR profile that covers it so the
+        # client can switch profiles on click. EIBI/RepeaterBook are intentionally
+        # excluded here (range/location based, not a curated global list).
+        sources = SdrService.getActiveSources()
+        result = []
+        for b in Bookmarks.getSharedInstance().getBookmarks():
+            entry = b.__dict__()
+            target = self._resolveProfileForFrequency(sources, b.getFrequency())
+            if target is not None:
+                entry["sdr_id"] = target[0]
+                entry["profile_id"] = target[1]
+                entry["profile_name"] = target[2]
+                entry["locked"] = target[3]
+            result.append(entry)
+        self.send({"type": "allbookmarks", "value": result})
+
     def handleTextMessage(self, conn, message):
         try:
             message = json.loads(message)
@@ -446,6 +487,8 @@ class OpenWebRxReceiverClient(OpenWebRxClient, SdrSourceEventClient):
                         key     = params["key"] if "key" in params else None
                         self.setProfile(profile[0], profile[1], key)
                         ClientRegistry.getSharedInstance().reportClientActivity(self, "profile_change")
+                elif message["type"] == "getallbookmarks":
+                    self.sendAllBookmarks()
                 elif message["type"] == "setfrequency":
                     # If the magic key is set in the settings, only allow
                     # changes if it matches the received key

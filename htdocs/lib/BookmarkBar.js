@@ -4,6 +4,10 @@ function BookmarkBar() {
     me.localBookmarks = new BookmarkLocalStorage();
     me.$container = $('#openwebrx-bookmarks-container');
     me.bookmarks = {};
+    // Full, profile-independent server bookmark list for cross-profile search
+    me.allServerBookmarks = null;
+    // Backing array for the current search result rows (index -> bookmark)
+    me.lastResults = [];
 
     me.$container.on('click', '.bookmark', function(e){
         var $bookmark = $(e.target).closest('.bookmark');
@@ -65,6 +69,12 @@ function BookmarkBar() {
     me.$search.find('form').on('submit', function(e){
         e.preventDefault();
         me.searchBookmarks();
+    });
+    // Clicking a result tunes it (switching profile first if needed)
+    me.$search.on('click', '.search-result', function(){
+        var idx = parseInt($(this).data('idx'));
+        var b = me.lastResults[idx];
+        if (b) me.tuneSearchResult(b);
     });
 }
 
@@ -133,6 +143,8 @@ BookmarkBar.prototype.render = function(){
 };
 
 BookmarkBar.prototype.showSearchDialog = function(text = null) {
+    // Pull the full, profile-independent list so search spans all profiles
+    requestAllBookmarks();
     this.$search.show();
     this.$search.find('#search-results').html('');
 
@@ -226,29 +238,95 @@ BookmarkBar.prototype.getAllBookmarks = function() {
     return !sb.length? (!lb.length? [] : lb) : !lb.length? sb : sb.concat(lb);
 };
 
+// Called when the server delivers the full, profile-independent bookmark list.
+BookmarkBar.prototype.replaceAllServerBookmarks = function(list) {
+    this.allServerBookmarks = (list || []).map(function(b){
+        b.source = 'server';
+        return b;
+    });
+    // Refresh an open search if the user has already typed something
+    if (this.$search.is(':visible') && this.$search.find('#search-text').val()) {
+        this.searchBookmarks();
+    }
+};
+
+// Pool of bookmarks to search over: the full local set (localStorage, not
+// band-filtered) plus the full server set once loaded. Falls back to the
+// in-band server bookmarks until the full list arrives.
+BookmarkBar.prototype.getSearchPool = function() {
+    var local = this.localBookmarks.getBookmarks().map(function(b){
+        b.source = 'local';
+        return b;
+    });
+    var server = this.allServerBookmarks !== null
+        ? this.allServerBookmarks
+        : (this.bookmarks['server'] || []);
+    return server.concat(local);
+};
+
 BookmarkBar.prototype.searchBookmarks = function() {
+    var me = this;
     var text = this.$search.find('#search-text').val().toLowerCase();
 
     // Search bookmark names for text
-    var result = this.getAllBookmarks().filter((b, i, array) => {
-        return (b.name.toLowerCase().indexOf(text) >= 0);
+    var result = this.getSearchPool().filter(function(b) {
+        return b.name && b.name.toLowerCase().indexOf(text) >= 0;
     });
 
     // Sort results alphabetically, then by frequency
-    result.sort((a, b) => {
-        return (a.name.localeCompare(b.name) || (a.frequency - b.frequency))
+    result.sort(function(a, b) {
+        return (a.name.localeCompare(b.name) || (a.frequency - b.frequency));
     });
 
-    // Prepare search results
-    text = result.map(b =>
-        '<tr><td class="search-left">' + b.name +
-        '</td><td class="search-right">' +
-        Utils.linkifyFreq(b.frequency, b.modulation) +
-        '</td></tr>'
-    ).join('\n');
+    // Keep the backing array so click handlers can resolve a row to a bookmark
+    me.lastResults = result;
+
+    // Prepare search results — whole row is clickable (see constructor)
+    var rows = result.map(function(b, i) {
+        var loc = '';
+        if (b.profile_name) {
+            loc = ' <span class="search-profile' + (b.locked ? ' locked' : '') + '">'
+                + (b.locked ? '&#128274; ' : '') + b.profile_name + '</span>';
+        }
+        return '<tr class="search-result" data-idx="' + i + '">'
+            + '<td class="search-left">' + b.name + loc + '</td>'
+            + '<td class="search-right">' + Utils.printFreq(b.frequency) + '</td></tr>';
+    }).join('\n');
 
     // Output results
     this.$search.find('#search-results').html(
-        '<table class="search-results">' + text + '</table>'
+        '<table class="search-results">' + rows + '</table>'
     );
+};
+
+// Tune a search result. If it lies in the current profile's band, tune
+// directly; otherwise switch to the covering profile first (unless that
+// profile is locked or busy with another client) and tune once it is active.
+BookmarkBar.prototype.tuneSearchResult = function(b) {
+    var inBand = b.frequency >= center_freq - bandwidth / 2
+              && b.frequency <= center_freq + bandwidth / 2;
+
+    if (inBand) {
+        UI.tuneBookmark(b);
+        UI.toggleScanner(false);
+        this.$search.hide();
+        return;
+    }
+
+    // Cross-profile jump needs a server-resolved target profile
+    if (!b.sdr_id || !b.profile_id) {
+        divlog('Lesezeichen liegt außerhalb des aktuellen Profils und ist keinem Profil zugeordnet.', true);
+        return;
+    }
+
+    // Do not steal a busy SDR from another client, and respect locked profiles
+    if (isProfileBlocked(b.sdr_id, b.profile_id, b.locked)) {
+        divlog('Zielprofil "' + (b.profile_name || b.profile_id) + '" ist belegt oder gesperrt.', true);
+        return;
+    }
+
+    // Switch profile, then tune once the new profile config arrives
+    setPendingBookmarkTune(b);
+    switchToProfile(b.sdr_id + '|' + b.profile_id);
+    this.$search.hide();
 };
