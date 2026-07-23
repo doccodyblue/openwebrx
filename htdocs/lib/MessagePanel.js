@@ -160,8 +160,8 @@ PacketMessagePanel.prototype.render = function() {
 PacketMessagePanel.prototype.pushMessage = function(msg) {
     var $b = $(this.el).find('tbody');
 
-    if (msg.type && msg.type === 'thirdparty' && msg.data) {
-        msg = msg.data;
+    if (msg.type && msg.type === 'thirdparty' && msg.forwarded) {
+        msg = msg.forwarded;
     }
 
     var source = msg.source;
