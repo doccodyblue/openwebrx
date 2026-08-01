@@ -166,6 +166,27 @@
     50%      { box-shadow: 0 0 8px 2px rgba(255, 60, 60, 0.85); }
 }
 
+/* Ausbreitungs-Badges: MUF (neutral-indigo) + K-Index (eskaliert wie Blitz) */
+.prop-muf {
+    background: rgba(80, 60, 130, 0.82);
+    border-color: rgba(170, 150, 230, 0.45);
+    transition: background-color 0.4s ease, border-color 0.4s ease;
+}
+
+/* MUF-Chip gegen die abgestimmte Frequenz (nur KW): unter / nahe / über der MUF */
+.prop-muf.prop-muf-open     { background: rgba(46, 120, 60, 0.85);  border-color: rgba(130, 210, 150, 0.5); }
+.prop-muf.prop-muf-marginal { background: rgba(176, 132, 11, 0.88); border-color: rgba(255, 214, 120, 0.55); }
+.prop-muf.prop-muf-closed   { background: rgba(200, 40, 40, 0.9);   border-color: rgba(255, 120, 120, 0.55); }
+
+.prop-k-quiet     { background: rgba(46, 120, 60, 0.82);  border-color: rgba(130, 210, 150, 0.45); }
+.prop-k-unsettled { background: rgba(176, 132, 11, 0.85); border-color: rgba(255, 214, 120, 0.5); }
+.prop-k-active    { background: rgba(214, 120, 20, 0.9);  border-color: rgba(255, 180, 90, 0.55); }
+.prop-k-storm     {
+    background: rgba(200, 40, 40, 0.92);
+    border-color: rgba(255, 120, 120, 0.6);
+    animation: wx-pulse 1.4s ease-in-out infinite;
+}
+
 /* Auf schmalen Screens ausblenden, damit die Top-Bar nicht bricht. */
 @media (max-width: 575px) {
     .wx-badges { display: none !important; }

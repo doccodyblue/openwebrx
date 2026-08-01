@@ -125,6 +125,7 @@ class CompiledAssetsController(GzipMixin, ModificationAwareController):
             "lib/lame.min.js",
             "lib/Header.js",
             "lib/WeatherBadges.js",
+            "lib/PropBadges.js",
             "lib/Demodulator.js",
             "lib/DemodulatorPanel.js",
             "lib/BookmarkLocalStorage.js",

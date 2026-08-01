@@ -1,4 +1,5 @@
 from owrx.controllers.status import StatusController
+from owrx.controllers.propagation import PropagationSummaryController
 from owrx.controllers.template import IndexController, MapController, PolicyController
 from owrx.controllers.feature import FeatureController
 from owrx.controllers.assets import OwrxAssetsController, AprsSymbolsController, CompiledAssetsController
@@ -95,6 +96,7 @@ class Router(object):
             StaticRoute("/", IndexController),
             StaticRoute("/robots.txt", RobotsController),
             StaticRoute("/status.json", StatusController),
+            StaticRoute("/prop/summary", PropagationSummaryController),
             StaticRoute("/clients.json", ClientsJsonController),
             RegexRoute("^/static/(.+)$", OwrxAssetsController),
             RegexRoute("^/compiled/(.+)$", CompiledAssetsController),
