@@ -103,6 +103,74 @@
     font-size: 10pt;
 }
 
+/*
+ * Wetter-Badges (Temperatur + Blitzaktivität), rechts neben Avatar/Locator-Text.
+ */
+.wx-badges {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 4px;
+    margin: auto 10px;
+    flex: 0 0 auto;
+}
+
+.wx-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-family: "DejaVu Sans", Verdana, Geneva, sans-serif;
+    font-size: 8.5pt;
+    font-weight: bold;
+    line-height: 1;
+    padding: 3px 9px;
+    border-radius: 999px;
+    white-space: nowrap;
+    color: #fff;
+    background: rgba(0, 0, 0, 0.35);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
+    cursor: default;
+}
+
+.wx-badge .wx-ico { font-size: 9.5pt; }
+.wx-temp .wx-trend { opacity: 0.85; }
+.wx-stale { opacity: 0.55; }
+
+.wx-temp {
+    background: rgba(38, 84, 124, 0.78);
+    border-color: rgba(120, 180, 240, 0.4);
+}
+
+.wx-lightning .wx-storm {
+    margin-left: 5px;
+    padding-left: 6px;
+    border-left: 1px solid rgba(255, 255, 255, 0.3);
+    font-weight: normal;
+    opacity: 0.92;
+}
+
+/* Eskalationsstufen (level = none|distant|near|close) */
+.wx-lvl-none    { background: rgba(90, 90, 90, 0.7);   border-color: rgba(255, 255, 255, 0.12); }
+.wx-lvl-distant { background: rgba(176, 132, 11, 0.85); border-color: rgba(255, 214, 120, 0.5); }
+.wx-lvl-near    { background: rgba(214, 120, 20, 0.9);  border-color: rgba(255, 180, 90, 0.55); }
+.wx-lvl-close   {
+    background: rgba(200, 40, 40, 0.92);
+    border-color: rgba(255, 120, 120, 0.6);
+    animation: wx-pulse 1.4s ease-in-out infinite;
+}
+
+@keyframes wx-pulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(255, 60, 60, 0.55); }
+    50%      { box-shadow: 0 0 8px 2px rgba(255, 60, 60, 0.85); }
+}
+
+/* Auf schmalen Screens ausblenden, damit die Top-Bar nicht bricht. */
+@media (max-width: 575px) {
+    .wx-badges { display: none !important; }
+}
+
 .openwebrx-main-buttons .button {
     display: block;
     width: 55px;
