@@ -124,6 +124,7 @@ class CompiledAssetsController(GzipMixin, ModificationAwareController):
             "lib/jquery.nanoscroller.min.js",
             "lib/lame.min.js",
             "lib/Header.js",
+            "lib/WeatherBadges.js",
             "lib/Demodulator.js",
             "lib/DemodulatorPanel.js",
             "lib/BookmarkLocalStorage.js",

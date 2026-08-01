@@ -6,6 +6,8 @@
             <h1 class="webrx-rx-title">${receiver_name}</h1>
             <div class="webrx-rx-desc">${receiver_location} | Loc: ${locator}, ASL: ${receiver_asl} m</div>
         </div>
+        <!-- Wetter-Badges (Temp + Blitzaktivität), befüllt von WeatherBadges.js -->
+        <div class="wx-badges" id="wx-badges" aria-live="polite" style="display:none"></div>
         <section class="openwebrx-main-buttons">
             <a class="button" href="${receiver_help}" target="openwebrx-help"><svg viewBox="0 -960 960 960"><use xlink:href="${document_root}static/gfx/svg-defs.svg#panel-help"></use></svg><br/>Help</a>
             <div class="button" data-toggle-panel="openwebrx-panel-status"><svg viewBox="0 -960 960 960"><use xlink:href="${document_root}static/gfx/svg-defs.svg#panel-status"></use></svg><br/>Status</div>
