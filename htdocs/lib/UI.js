@@ -41,6 +41,8 @@ UI.loadSettings = function() {
     this.setWfTheme(LS.has('wf_theme')? LS.loadStr('wf_theme') : 'default');
     this.setNR(LS.has('nr_threshold')? LS.loadInt('nr_threshold') : 8);
     this.toggleNR(LS.has('nr_enabled')? LS.loadBool('nr_enabled') : false);
+    this.setNB(LS.has('nb_level')? LS.loadInt('nb_level') : 12);
+    this.toggleNB(LS.has('nb_enabled')? LS.loadBool('nb_enabled') : false);
 
     // Load NR2 advanced settings
     this.loadNR2Settings();
@@ -326,6 +328,57 @@ UI.toggleNR = function(on) {
     this.updateNR();
 }
 
+//
+// Noise Blanker Controls
+//
+// Unlike NR (which runs client-side in the browser AudioEngine on the
+// demodulated audio), the noise blanker MUST run on the server: it gates
+// impulsive noise on the complex IQ signal *before* demodulation, which only
+// exists there. State is pushed to the server via dspcontrol.
+//
+
+UI.nbEnabled = false;
+UI.nbLevel = 12;      // slider value 1..20, higher = stronger (intuitive direction)
+UI.nbThreshold = 10;  // linear factor sent to the server (lower = blanks more)
+
+// Set noise blanker strength from the slider. The slider reads left→right as
+// gentle→aggressive; internally that maps to a *falling* threshold factor
+// (blank anything above threshold× the running average magnitude).
+UI.setNB = function(level) {
+    level = Math.round(parseFloat(level));
+    this.nbLevel = level;
+    // level 1 -> factor ~21 (only huge spikes), level 20 -> factor 2 (very aggressive)
+    this.nbThreshold = Math.max(2, 22 - level);
+    LS.save('nb_level', level);
+    $('#openwebrx-panel-nb').attr('title', 'Noise blanker strength (' + level + '/20; higher = blanks more)').val(level);
+    this.sendNB();
+};
+
+// Toggle noise blanker on/off.
+UI.toggleNB = function(on) {
+    var $nbPanel = $('#openwebrx-panel-nb');
+    var $nbButton = $('.openwebrx-nb-toggle');
+
+    // If no argument given, toggle NB
+    this.nbEnabled = !!(typeof(on)==='undefined'? $nbPanel.prop('disabled') : on);
+
+    LS.save('nb_enabled', this.nbEnabled);
+    $nbPanel.prop('disabled', !this.nbEnabled);
+    $nbButton.toggleClass('active', this.nbEnabled);
+    this.sendNB();
+};
+
+// Push the current NB state to the server (no-op until the socket is up;
+// re-sent on connect from openwebrx.js so a saved preference is restored).
+UI.sendNB = function() {
+    if (typeof ws !== 'undefined' && ws) {
+        ws.send(JSON.stringify({
+            "type": "dspcontrol",
+            "params": {"nb_enabled": this.nbEnabled, "nb_threshold": this.nbThreshold}
+        }));
+    }
+};
+
 // NR profile: 'easy' (relaxed listening) or 'dx' (aggressive weak signal)
 UI.nrProfile = 'easy';
 
@@ -510,14 +563,14 @@ UI.setAgcProfile = function(profile) {
 UI.updateAgcVisibility = function() {
     var demod = this.getDemodulator();
     if (!demod) {
-        $('#openwebrx-agc-buttons').hide();
+        $('#openwebrx-agc-line').hide();
         return;
     }
     var modulation = demod.get_modulation();
     // AGC is used for USB, LSB, AM, SAM, CW modes
     var agcModes = ['usb', 'lsb', 'am', 'sam', 'cw'];
     var show = agcModes.indexOf(modulation) >= 0;
-    $('#openwebrx-agc-buttons').toggle(show);
+    $('#openwebrx-agc-line').toggle(show);
 
     // Re-send current AGC profile when switching to AGC mode
     if (show && typeof ws !== 'undefined' && ws) {

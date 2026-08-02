@@ -12,6 +12,15 @@ from csdr.chain.clientaudio import ClientAudioChain
 from csdr.chain.fft import FftChain
 from csdr.chain.dummy import DummyDemodulator
 from pycsdr.modules import Buffer, Writer, Agc
+# Noise Blanker (time-domain impulse gate on the IQ baseband). Only present in
+# our rebuilt pycsdr; guard the import so the fork still runs on stock pycsdr,
+# where the NB simply stays unavailable instead of breaking the DSP.
+try:
+    from pycsdr.modules import NoiseBlanker
+    _HAS_NB = True
+except ImportError:
+    NoiseBlanker = None
+    _HAS_NB = False
 from pycsdr.types import Format, AgcProfile
 from typing import Union, Optional
 from io import BytesIO
@@ -37,12 +46,16 @@ class ClientDemodulatorSecondaryDspEventClient(ABC):
 
 
 class ClientDemodulatorChain(Chain):
-    def __init__(self, demod: BaseDemodulatorChain, sampleRate: int, outputRate: int, hdOutputRate: int, audioCompression: str, nrEnabled: bool, nrThreshold: int, secondaryDspEventReceiver: ClientDemodulatorSecondaryDspEventClient):
+    def __init__(self, demod: BaseDemodulatorChain, sampleRate: int, outputRate: int, hdOutputRate: int, audioCompression: str, nrEnabled: bool, nrThreshold: int, nbEnabled: bool, nbThreshold: int, secondaryDspEventReceiver: ClientDemodulatorSecondaryDspEventClient):
         self.sampleRate = sampleRate
         self.outputRate = outputRate
         self.hdOutputRate = hdOutputRate
         self.nrEnabled = nrEnabled
         self.nrThreshold = nrThreshold
+        # Noise Blanker sits on the IQ baseband, between selector and demodulator.
+        self.nbEnabled = nbEnabled and _HAS_NB
+        self.nbThreshold = nbThreshold
+        self.nb = None
         self.secondaryDspEventReceiver = secondaryDspEventReceiver
         self.selector = Selector(sampleRate, outputRate)
         self.selectorBuffer = Buffer(Format.COMPLEX_FLOAT)
@@ -67,7 +80,42 @@ class ClientDemodulatorChain(Chain):
         self.squelchLevel = -150
         self.secondarySelector = None
         self.secondaryFrequencyOffset = None
-        super().__init__([self.selector, self.demodulator, self.clientAudioChain])
+        workers = [self.selector]
+        if self.nbEnabled:
+            self.nb = self._buildNb()
+            workers.append(self.nb)
+        workers += [self.demodulator, self.clientAudioChain]
+        super().__init__(workers)
+
+    def _buildNb(self):
+        # threshold is a linear factor above the running average IQ magnitude
+        return NoiseBlanker(threshold=float(self.nbThreshold))
+
+    def _demodIndex(self):
+        # selector is always at 0; the NB (when active) occupies 1; the
+        # demodulator follows. Used everywhere the demod slot is replaced.
+        return 2 if (self.nbEnabled and self.nb is not None) else 1
+
+    def setNbEnabled(self, nbEnabled: bool) -> None:
+        nbEnabled = nbEnabled and _HAS_NB
+        if nbEnabled == self.nbEnabled:
+            return
+        if nbEnabled:
+            nb = self._buildNb()
+            self.insert(1, nb)  # between selector(0) and demodulator
+            self.nb = nb
+            self.nbEnabled = True
+        else:
+            self.remove(1)
+            self.nbEnabled = False
+            self.nb = None
+
+    def setNbThreshold(self, nbThreshold: int) -> None:
+        if nbThreshold == self.nbThreshold:
+            return
+        self.nbThreshold = nbThreshold
+        if self.nb is not None:
+            self.nb.setThreshold(float(nbThreshold))
 
     def stop(self):
         super().stop()
@@ -137,7 +185,7 @@ class ClientDemodulatorChain(Chain):
         if self.metaWriter is not None and isinstance(demodulator, MetaProvider):
             demodulator.setMetaWriter(self.metaWriter)
 
-        self.replace(1, demodulator)
+        self.replace(self._demodIndex(), demodulator)
 
         self.clientAudioChain.setInputRate(clientRate)
         outputRate = self.hdOutputRate if isinstance(self.demodulator, HdAudio) else self.outputRate
@@ -165,7 +213,7 @@ class ClientDemodulatorChain(Chain):
         # so we just replace it with a dummy here
         # in order to avoid any client audio chain hassle, the dummy simply imitates the output format of the current
         # demodulator
-        self.replace(1, DummyDemodulator(self.demodulator.getOutputFormat()))
+        self.replace(self._demodIndex(), DummyDemodulator(self.demodulator.getOutputFormat()))
 
         self.demodulator.stop()
         self.demodulator = None
@@ -480,6 +528,8 @@ class DspManager(SdrSourceEventClient, ClientDemodulatorSecondaryDspEventClient)
             "audio_service_id": "int",
             "nr_enabled": "bool",
             "nr_threshold": "int",
+            "nb_enabled": "bool",
+            "nb_threshold": "int",
             "ssb_agc_profile": RegexValidator(re.compile("^(Slow|Mid|Fast)$")),
         }
         self.localProps = PropertyValidator(PropertyLayer().filter(*validators.keys()), validators)
@@ -515,7 +565,9 @@ class DspManager(SdrSourceEventClient, ClientDemodulatorSecondaryDspEventClient)
                 hd_output_rate=48000,
                 digital_voice_codecserver="",
                 nr_enabled=False,
-                nr_threshold=0
+                nr_threshold=0,
+                nb_enabled=False,
+                nb_threshold=8
             ).readonly()
         )
 
@@ -527,6 +579,8 @@ class DspManager(SdrSourceEventClient, ClientDemodulatorSecondaryDspEventClient)
             self.props["audio_compression"],
             self.props["nr_enabled"],
             self.props["nr_threshold"],
+            self.props["nb_enabled"],
+            self.props["nb_threshold"],
             self
         )
 
@@ -577,6 +631,8 @@ class DspManager(SdrSourceEventClient, ClientDemodulatorSecondaryDspEventClient)
             self.props.wireProperty("secondary_offset_freq", self.chain.setSecondaryFrequencyOffset),
             self.props.wireProperty("nr_enabled", self.chain.setNrEnabled),
             self.props.wireProperty("nr_threshold", self.chain.setNrThreshold),
+            self.props.wireProperty("nb_enabled", self.chain.setNbEnabled),
+            self.props.wireProperty("nb_threshold", self.chain.setNbThreshold),
             self.props.wireProperty("ssb_agc_profile", self.chain.setAgcProfile),
         ]
 
