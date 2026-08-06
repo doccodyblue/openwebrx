@@ -13,6 +13,9 @@ This fork adds the following customizations on top of OpenWebRX+:
 * **IP Whitelist for Timeout** - Exempt specific IPs or CIDR ranges from session timeout (e.g., local network users never get kicked)
 * **SDR Profile Locking** - First user on an SDR becomes "owner" and controls the profile; others can only listen along on the active profile. Prevents users from disrupting each other's reception. Live updates show listener count and ownership status.
 * **NR2 Noise Reduction** - Client-side spectral noise reduction via AudioWorklet with OSMS (Optimally Smoothed Minimum Statistics) noise estimation. Features selectable gain methods (Linear/Log/Gamma), Artifact Elimination filter, VAD-based soft gate with adjustable depth, and NR/DX profile switching (right-click NR button). Advanced settings panel for fine-tuning T1/T2 time constants.
+* **Server-Side Noise Blanker (NB)** - Time-domain impulse blanker on the complex IQ *before* demodulation, against ignition noise, electric fence ticks and static crashes. Adjustable threshold slider; blanks the leading pulse edge via a look-behind delay line. *Requires the modified csdr build, see note below.*
+* **Server-Side Auto-Notch (AN)** - NLMS adaptive notch filter on the demodulated audio; removes carriers and heterodynes (~60 dB in testing) while leaving broadband content untouched. *Requires the modified csdr build, see note below.*
+* **AI Noise Reduction (RNNoise)** - Server-side neural network denoiser (Xiph RNNoise, 48 kHz speech model, resampler-wrapped for other audio rates) with a live dry/wet mix slider — the dry path is delay-compensated so the blend stays phase-aligned at any mix setting. The network's per-frame voice activity probability additionally drives a VAD gate (controlled by the NR2 "Gate" slider): with mix at 0% and gate at 100% it acts as a pure speech-triggered squelch. Not suitable for CW/digimodes. *Requires the modified csdr build, see note below.*
 * **DX Cluster Integration** - Live DX spots with waterfall markers showing spotted stations
 * **Radiosonde Decoder** - Custom RS41/DFM decoder chain with AGC and automatic signal finding (more reliable than upstream)
 * **Rotation Scheduler** - Automatic profile rotation for SDR devices
@@ -28,6 +31,9 @@ This fork adds the following customizations on top of OpenWebRX+:
 * NR2 with soft limiter to prevent clipping (profile-aware: harder compression for DX mode)
 * S-meter shows NR2 gate reduction indicator
 * Radiosonde panel display for sonde modes
+
+**Note on Server-Side DSP (NB / AN / AI NR):**
+These three features need a **modified `csdr`/`pycsdr` build** — the stock OpenWebRX+ PPA packages do *not* include the required modules (`NoiseBlanker`, `AutoNotch` and `RNNoise`, the latter statically linked against Xiph's librnnoise). All imports are try/except-guarded, so running this fork on stock packages is safe: the receiver works normally, the NB/AN/AI controls just have no effect. The C++ module sources plus an idempotent script that patches them into fresh csdr/pycsdr source trees before building the debs are currently maintained outside this repository — open an issue if you are interested.
 
 **Note on Radiosonde Support:**
 We use our own radiosonde decoder chain (`csdr.chain.radiosonde`) instead of upstream's (`csdr.chain.sonde`) because the upstream implementation did not decode reliably in our tests. Our chain includes AGC and uses `fsk_demod` for automatic signal finding, making it more robust when not tuned exactly to the sonde frequency.
