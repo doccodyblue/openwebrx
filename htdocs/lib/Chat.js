@@ -10,7 +10,12 @@ Chat.nicknameRequired = false;
 
 // Load chat settings from local storage.
 Chat.loadSettings = function() {
-    this.setNickname(LS.has('chatname')? LS.loadStr('chatname') : '');
+    // Discard previously saved names that fail the current quality rule,
+    // so their owners get the nickname modal again instead of silently
+    // being rejected by the server.
+    var savedName = LS.has('chatname')? LS.loadStr('chatname') : '';
+    if (savedName && !this.isValidNickname(savedName)) savedName = '';
+    this.setNickname(savedName);
     // Check if nickname is required and not set
     if (this.nicknameRequired && !this.nickname) {
         this.showNicknameModal();
@@ -22,6 +27,21 @@ Chat.sendNicknameToServer = function() {
     if (this.nickname && typeof ws !== 'undefined' && ws.readyState === WebSocket.OPEN) {
         ws.send(JSON.stringify({'type': 'setnickname', 'name': this.nickname}));
     }
+};
+
+// Weak-quality nickname rule, mirrored server-side (owrx/client.py):
+// - at least 4 characters with a digit (every callsign passes naturally), OR
+// - at least 6 letters for real names without digits ("Seefunker"),
+// - and never a generic placeholder ("Anonym", "Gast", ...).
+Chat.genericNicknames = ['anonym', 'anonymous', 'gast', 'guest', 'user', 'test',
+    'tester', 'admin', 'unknown', 'nobody', 'niemand', 'keiner', 'name',
+    'nickname', 'rufzeichen', 'callsign'];
+Chat.isValidNickname = function(name) {
+    if (typeof name !== 'string') return false;
+    name = name.trim();
+    if (name.length < 4) return false;
+    if (this.genericNicknames.indexOf(name.toLowerCase()) >= 0) return false;
+    return /\d/.test(name) || name.length >= 6;
 };
 
 // Show modal to require nickname input
@@ -36,7 +56,8 @@ Chat.showNicknameModal = function() {
     modal.innerHTML = `
         <div class="nickname-modal">
             <h2>Willkommen!</h2>
-            <p>Bitte gib deinen Namen oder dein Rufzeichen ein:</p>
+            <p>Bitte gib dein Rufzeichen oder deinen Namen ein<br>
+               <small>(z.B. DL1ABC oder Seefunker &mdash; keine Wegwerf-Namen wie &quot;Abc&quot;)</small>:</p>
             <input type="text" id="nickname-modal-input" placeholder="Rufzeichen / Nickname" maxlength="20" autofocus>
             <button id="nickname-modal-submit">OK</button>
         </div>
@@ -48,12 +69,13 @@ Chat.showNicknameModal = function() {
 
     var submitNickname = function() {
         var name = input.value.trim();
-        if (name.length >= 2) {
+        if (Chat.isValidNickname(name)) {
             Chat.setNickname(name);
             modal.remove();
         } else {
             input.classList.add('error');
-            input.placeholder = 'Mindestens 2 Zeichen!';
+            input.value = '';
+            input.placeholder = 'Bitte Rufzeichen oder richtigen Namen!';
         }
     };
 
@@ -66,6 +88,14 @@ Chat.showNicknameModal = function() {
 
 // Set chat nickname.
 Chat.setNickname = function(nickname) {
+    // Empty means "no name yet"; non-empty names must pass the quality
+    // rule (the server enforces the same rule and would drop them anyway).
+    if (nickname && !this.isValidNickname(nickname)) {
+        $('#openwebrx-chat-name').addClass('error')
+            .attr('title', 'Bitte Rufzeichen oder richtigen Namen (keine Wegwerf-Namen wie "Abc")');
+        return;
+    }
+    $('#openwebrx-chat-name').removeClass('error').removeAttr('title');
     if (this.nickname !== nickname) {
         this.nickname = nickname;
         LS.save('chatname', nickname);

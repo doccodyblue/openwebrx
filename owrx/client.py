@@ -179,15 +179,40 @@ class ClientRegistry(object):
             "message" : text
         })
 
+    # Generic throwaway names that carry no identity, blocked regardless
+    # of length (case-insensitive, checked after the \W cleanup).
+    GENERIC_NICKNAMES = {
+        "anonym", "anonymous", "gast", "guest", "user", "test", "tester",
+        "admin", "unknown", "nobody", "niemand", "keiner", "name",
+        "nickname", "rufzeichen", "callsign",
+    }
+
+    # Weak-quality nickname rule, mirrored client-side (Chat.js):
+    # - at least 4 characters with a digit (every amateur/SWL callsign
+    #   qualifies naturally), OR
+    # - at least 6 letters for real names without digits ("Seefunker"),
+    # - and never a generic placeholder ("Anonym", "Gast", ...).
+    # Enforced server-side so it cannot be bypassed by talking to the
+    # WebSocket directly.
+    @staticmethod
+    def isValidNickname(name: str) -> bool:
+        if name is None or len(name) < 4:
+            return False
+        if name.lower() in ClientRegistry.GENERIC_NICKNAMES:
+            return False
+        return any(c.isdigit() for c in name) or len(name) >= 6
+
     # Register nickname for a client without broadcasting a message
     def registerNickname(self, client, name: str):
         if not name:
             return
         with self.chatLock:
             # Names can only include alphanumerics
-            name = re.sub(r"\W+", "", name)
-            if not name:
+            name = re.sub(r"\W+", "", name)[:20]
+            if not self.isValidNickname(name):
+                logger.info("nickname REJECTED: '%s' (from %s)", name, self.getIp(client.conn.handler))
                 return
+            logger.info("nickname accepted: '%s' (from %s)", name, self.getIp(client.conn.handler))
             # Cannot have duplicate names
             if client not in self.chat or name != self.chat[client]["name"]:
                 for c in self.chat:
@@ -214,7 +239,12 @@ class ClientRegistry(object):
         with self.chatLock:
             if name is not None:
                 # Names can only include alphanumerics
-                name = re.sub(r"\W+", "", name)
+                name = re.sub(r"\W+", "", name)[:20]
+                # Low-quality names are dropped -> existing name or "UserN" fallback
+                if not self.isValidNickname(name):
+                    logger.info("chat nickname REJECTED: '%s' (from %s)", name, self.getIp(client.conn.handler))
+                    name = None
+            if name is not None:
                 # Cannot have duplicate names
                 if client not in self.chat or name != self.chat[client]["name"]:
                     for c in self.chat:
