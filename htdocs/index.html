@@ -304,6 +304,15 @@
                                 <span class="nb-mode-label">NB</span>
                             </div>
                             <input title="Noise blanker strength (right = blanks more)" disabled id="openwebrx-panel-nb" class="openwebrx-panel-slider" type="range" min="1" max="20" value="12" step="1" onchange="UI.setNB(this.value)" oninput="UI.setNB(this.value)">
+                            <div title="Automatic notch filter on/off (adaptive LMS notch, removes carriers/heterodynes/tuner whistles from the audio)" class="openwebrx-an-toggle openwebrx-button openwebrx-slider-button" onclick="UI.toggleAN();">
+                                <span class="nb-mode-label">AN</span>
+                            </div>
+                        </div>
+                        <div class="openwebrx-panel-line">
+                            <div title="AI noise suppression on/off (RNNoise neural network, trained on speech - best on SSB/AM/FM voice)" class="openwebrx-rnn-toggle openwebrx-button openwebrx-slider-button" onclick="UI.toggleRNN();">
+                                <span class="nb-mode-label">AI</span>
+                            </div>
+                            <input title="AI noise suppression mix (dry/wet)" disabled id="openwebrx-panel-rnn" class="openwebrx-panel-slider" type="range" min="0" max="100" value="100" step="5" onchange="UI.setRNNMix(this.value)" oninput="UI.setRNNMix(this.value)">
                         </div>
                         <div class="openwebrx-panel-line" id="openwebrx-agc-line" style="display:none;">
                             <span class="openwebrx-agc-label">AGC:</span>
@@ -340,7 +349,7 @@
                         </div>
                         <div class="openwebrx-panel-line">
                             Gate: <span id="openwebrx-nr2-gate-label">45%</span>
-                            <input id="openwebrx-nr2-gate" class="openwebrx-panel-slider" type="range" min="0.0" max="1.0" value="0.45" step="0.05" onchange="UI.setNR2GateDepth(this.value)" oninput="UI.setNR2GateDepth(this.value)">
+                            <input id="openwebrx-nr2-gate" title="Noise gate depth - drives the NR2 spectral gate and, with AI enabled, the RNNoise voice-activity gate (silence between transmissions)" class="openwebrx-panel-slider" type="range" min="0.0" max="1.0" value="0.45" step="0.05" onchange="UI.setNR2GateDepth(this.value)" oninput="UI.setNR2GateDepth(this.value)">
                         </div>
                     </div>
                     <div id="openwebrx-section-settings" class="openwebrx-section-divider" onclick="UI.toggleSection(this);">&blacktriangle;&nbsp;Settings</div>

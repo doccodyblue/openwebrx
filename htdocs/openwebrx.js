@@ -1140,7 +1140,7 @@ function on_ws_recv(evt) {
 
                         // Restore the client's saved noise-blanker preference to the
                         // server now that the socket is up (server default is off).
-                        UI.sendNB();
+                        UI.sendNoiseDsp();
 
                         if ('squelch_auto_margin' in config)
                             demodulatorPanel.setSquelchMargin(config['squelch_auto_margin']);

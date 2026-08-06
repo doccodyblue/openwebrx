@@ -2316,6 +2316,18 @@ img.openwebrx-mirror-img
     box-shadow: 0 0 8px #29b6f6;
 }
 
+/* AN (automatic notch) button active state - purple */
+.openwebrx-an-toggle.active {
+    background: #ab47bc !important;
+    box-shadow: 0 0 8px #ab47bc;
+}
+
+/* AI (RNNoise neural noise suppression) button active state - orange */
+.openwebrx-rnn-toggle.active {
+    background: #ff7043 !important;
+    box-shadow: 0 0 8px #ff7043;
+}
+
 /* NB mode label */
 .nb-mode-label {
     font-weight: bold;
@@ -2557,6 +2569,12 @@ img.openwebrx-mirror-img
 
 .nickname-modal input.error {
     border-color: #ff4444;
+}
+
+/* chat panel name field rejecting a low-quality nickname */
+#openwebrx-chat-name.error {
+    border-color: #ff4444;
+    outline: 1px solid #ff4444;
 }
 
 .nickname-modal button {

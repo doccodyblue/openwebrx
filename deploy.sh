@@ -19,5 +19,10 @@ sudo rsync -a --delete --exclude='__pycache__' --exclude='*.pyc' \
 sudo rsync -a --exclude='__pycache__' --exclude='*.pyc' --exclude='*.bak.*' \
   "$FORK/htdocs/" "$LIVE/htdocs/"
 
+# DSP-Chains (csdr/chain/*.py, z.B. clientaudio.py mit AutoNotch/RNNoise):
+# ohne --delete, gleiche Vorsicht wie bei htdocs.
+sudo rsync -a --exclude='__pycache__' --exclude='*.pyc' \
+  "$FORK/csdr/" "$LIVE/csdr/"
+
 sudo systemctl restart openwebrx
 echo "Fertig. Dienst neu gestartet."

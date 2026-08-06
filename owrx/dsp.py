@@ -46,7 +46,7 @@ class ClientDemodulatorSecondaryDspEventClient(ABC):
 
 
 class ClientDemodulatorChain(Chain):
-    def __init__(self, demod: BaseDemodulatorChain, sampleRate: int, outputRate: int, hdOutputRate: int, audioCompression: str, nrEnabled: bool, nrThreshold: int, nbEnabled: bool, nbThreshold: int, secondaryDspEventReceiver: ClientDemodulatorSecondaryDspEventClient):
+    def __init__(self, demod: BaseDemodulatorChain, sampleRate: int, outputRate: int, hdOutputRate: int, audioCompression: str, nrEnabled: bool, nrThreshold: int, nbEnabled: bool, nbThreshold: int, anEnabled: bool, rnnEnabled: bool, rnnMix: int, rnnGate: int, secondaryDspEventReceiver: ClientDemodulatorSecondaryDspEventClient):
         self.sampleRate = sampleRate
         self.outputRate = outputRate
         self.hdOutputRate = hdOutputRate
@@ -68,7 +68,7 @@ class ClientDemodulatorChain(Chain):
         self.rdsRbds = False
         inputRate = demod.getFixedAudioRate() if isinstance(demod, FixedAudioRateChain) else outputRate
         oRate = hdOutputRate if isinstance(demod, HdAudio) else outputRate
-        self.clientAudioChain = ClientAudioChain(demod.getOutputFormat(), inputRate, oRate, audioCompression, nrEnabled, nrThreshold)
+        self.clientAudioChain = ClientAudioChain(demod.getOutputFormat(), inputRate, oRate, audioCompression, nrEnabled, nrThreshold, anEnabled, rnnEnabled, rnnMix, rnnGate)
         self.secondaryFftSize = 2048
         self.secondaryFftOverlapFactor = 0.3
         self.secondaryFftFps = 9
@@ -345,6 +345,18 @@ class ClientDemodulatorChain(Chain):
     def setNrThreshold(self, nrThreshold: int) -> None:
         self.clientAudioChain.setNrThreshold(nrThreshold)
 
+    def setAnEnabled(self, anEnabled: bool) -> None:
+        self.clientAudioChain.setAnEnabled(anEnabled)
+
+    def setRnnEnabled(self, rnnEnabled: bool) -> None:
+        self.clientAudioChain.setRnnEnabled(rnnEnabled)
+
+    def setRnnMix(self, rnnMix: int) -> None:
+        self.clientAudioChain.setRnnMix(rnnMix)
+
+    def setRnnGate(self, rnnGate: int) -> None:
+        self.clientAudioChain.setRnnGate(rnnGate)
+
     def setSquelchLevel(self, level: float) -> None:
         if level == self.squelchLevel:
             return
@@ -530,6 +542,10 @@ class DspManager(SdrSourceEventClient, ClientDemodulatorSecondaryDspEventClient)
             "nr_threshold": "int",
             "nb_enabled": "bool",
             "nb_threshold": "int",
+            "an_enabled": "bool",
+            "rnn_enabled": "bool",
+            "rnn_mix": "int",
+            "rnn_gate": "int",
             "ssb_agc_profile": RegexValidator(re.compile("^(Slow|Mid|Fast)$")),
         }
         self.localProps = PropertyValidator(PropertyLayer().filter(*validators.keys()), validators)
@@ -567,7 +583,11 @@ class DspManager(SdrSourceEventClient, ClientDemodulatorSecondaryDspEventClient)
                 nr_enabled=False,
                 nr_threshold=0,
                 nb_enabled=False,
-                nb_threshold=8
+                nb_threshold=8,
+                an_enabled=False,
+                rnn_enabled=False,
+                rnn_mix=100,
+                rnn_gate=0
             ).readonly()
         )
 
@@ -581,6 +601,10 @@ class DspManager(SdrSourceEventClient, ClientDemodulatorSecondaryDspEventClient)
             self.props["nr_threshold"],
             self.props["nb_enabled"],
             self.props["nb_threshold"],
+            self.props["an_enabled"],
+            self.props["rnn_enabled"],
+            self.props["rnn_mix"],
+            self.props["rnn_gate"],
             self
         )
 
@@ -633,6 +657,10 @@ class DspManager(SdrSourceEventClient, ClientDemodulatorSecondaryDspEventClient)
             self.props.wireProperty("nr_threshold", self.chain.setNrThreshold),
             self.props.wireProperty("nb_enabled", self.chain.setNbEnabled),
             self.props.wireProperty("nb_threshold", self.chain.setNbThreshold),
+            self.props.wireProperty("an_enabled", self.chain.setAnEnabled),
+            self.props.wireProperty("rnn_enabled", self.chain.setRnnEnabled),
+            self.props.wireProperty("rnn_mix", self.chain.setRnnMix),
+            self.props.wireProperty("rnn_gate", self.chain.setRnnGate),
             self.props.wireProperty("ssb_agc_profile", self.chain.setAgcProfile),
         ]
 

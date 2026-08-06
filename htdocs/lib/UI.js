@@ -43,6 +43,9 @@ UI.loadSettings = function() {
     this.toggleNR(LS.has('nr_enabled')? LS.loadBool('nr_enabled') : false);
     this.setNB(LS.has('nb_level')? LS.loadInt('nb_level') : 12);
     this.toggleNB(LS.has('nb_enabled')? LS.loadBool('nb_enabled') : false);
+    this.toggleAN(LS.has('an_enabled')? LS.loadBool('an_enabled') : false);
+    this.setRNNMix(LS.has('rnn_mix')? LS.loadInt('rnn_mix') : 100);
+    this.toggleRNN(LS.has('rnn_enabled')? LS.loadBool('rnn_enabled') : false);
 
     // Load NR2 advanced settings
     this.loadNR2Settings();
@@ -351,7 +354,7 @@ UI.setNB = function(level) {
     this.nbThreshold = Math.max(2, 22 - level);
     LS.save('nb_level', level);
     $('#openwebrx-panel-nb').attr('title', 'Noise blanker strength (' + level + '/20; higher = blanks more)').val(level);
-    this.sendNB();
+    this.sendNoiseDsp();
 };
 
 // Toggle noise blanker on/off.
@@ -365,18 +368,68 @@ UI.toggleNB = function(on) {
     LS.save('nb_enabled', this.nbEnabled);
     $nbPanel.prop('disabled', !this.nbEnabled);
     $nbButton.toggleClass('active', this.nbEnabled);
-    this.sendNB();
+    this.sendNoiseDsp();
 };
 
-// Push the current NB state to the server (no-op until the socket is up;
-// re-sent on connect from openwebrx.js so a saved preference is restored).
-UI.sendNB = function() {
+// Push the current server-side noise DSP state (NB + AN + AI) to the server
+// (no-op until the socket is up; re-sent on connect from openwebrx.js so
+// saved preferences are restored).
+UI.sendNoiseDsp = function() {
     if (typeof ws !== 'undefined' && ws) {
         ws.send(JSON.stringify({
             "type": "dspcontrol",
-            "params": {"nb_enabled": this.nbEnabled, "nb_threshold": this.nbThreshold}
+            "params": {
+                "nb_enabled": this.nbEnabled, "nb_threshold": this.nbThreshold,
+                "an_enabled": this.anEnabled,
+                "rnn_enabled": this.rnnEnabled, "rnn_mix": this.rnnMix,
+                "rnn_gate": Math.round(this.nr2GateDepth * 100)
+            }
         }));
     }
+};
+
+//
+// Automatic Notch Filter (server-side, LMS adaptive notch on the audio)
+//
+
+UI.anEnabled = false;
+
+// Toggle automatic notch filter on/off.
+UI.toggleAN = function(on) {
+    this.anEnabled = !!(typeof(on)==='undefined'? !this.anEnabled : on);
+    LS.save('an_enabled', this.anEnabled);
+    $('.openwebrx-an-toggle').toggleClass('active', this.anEnabled);
+    this.sendNoiseDsp();
+};
+
+//
+// AI Noise Suppression (server-side RNNoise neural network)
+//
+
+UI.rnnEnabled = false;
+UI.rnnMix = 100;
+
+// Toggle AI noise suppression on/off.
+UI.toggleRNN = function(on) {
+    var $rnnPanel = $('#openwebrx-panel-rnn');
+    var $rnnButton = $('.openwebrx-rnn-toggle');
+
+    // If no argument given, toggle
+    this.rnnEnabled = !!(typeof(on)==='undefined'? $rnnPanel.prop('disabled') : on);
+
+    LS.save('rnn_enabled', this.rnnEnabled);
+    $rnnPanel.prop('disabled', !this.rnnEnabled);
+    $rnnButton.toggleClass('active', this.rnnEnabled);
+    this.sendNoiseDsp();
+};
+
+// Set AI noise suppression dry/wet mix (0 = bypass, 100 = fully denoised).
+UI.setRNNMix = function(x) {
+    x = Math.round(parseFloat(x));
+    this.rnnMix = x;
+    LS.save('rnn_mix', x);
+    $('#openwebrx-panel-rnn').attr('title', 'AI noise suppression mix (' + x + '% wet)').val(x);
+    this.sendNoiseDsp();
 };
 
 // NR profile: 'easy' (relaxed listening) or 'dx' (aggressive weak signal)
@@ -499,7 +552,11 @@ UI.setNR2T2 = function(value) {
     }
 };
 
-// Set Gate Depth parameter
+// Set Gate Depth parameter. This one slider drives BOTH gates: the
+// client-side NR2 spectral gate (as before) and, when the AI noise
+// suppression is active, the server-side RNNoise VAD gate — same
+// semantics (how deep to attenuate between transmissions), but the AI
+// version triggers on the network's per-frame speech probability.
 UI.setNR2GateDepth = function(value) {
     value = Math.max(0.0, Math.min(1.0, parseFloat(value)));
     this.nr2GateDepth = value;
@@ -509,6 +566,7 @@ UI.setNR2GateDepth = function(value) {
     if (typeof audioEngine !== 'undefined' && audioEngine) {
         audioEngine.setNR2GateDepth(value);
     }
+    this.sendNoiseDsp();
 };
 
 // Load NR2 advanced settings from storage
