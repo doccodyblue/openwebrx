@@ -4,3 +4,7 @@ tags
 .idea
 packages
 claude.md
+build/
+OpenWebRX.egg-info/
+jt9_wisdom.dat
+timer.out
