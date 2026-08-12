@@ -475,6 +475,13 @@ class SdrSource(ABC):
         # check current profile and the overall source setting
         return "key_locked" in self.props and self.props["key_locked"]
 
+    def isProfileDisabled(self, profile_id):
+        profiles = self.getProfiles()
+        if profile_id in profiles:
+            profile = profiles[profile_id]
+            return "disabled" in profile and profile["disabled"]
+        return False
+
     def stop(self):
         with self.modificationLock:
             # make sure we do not restart after stop
@@ -752,6 +759,12 @@ class SdrDeviceDescription(object):
                 "Restrict profile to magic key holders",
                 infotext="Hide this profile from users without the magic key in their URL (#key=xxx).",
             ),
+            CheckboxInput(
+                "disabled",
+                "Disable this profile",
+                infotext="Completely hide this profile from all users. Unlike restricted profiles, the magic key"
+                + " does not unlock it. If the profile is currently active, it keeps running until the next switch.",
+            ),
             GainInput("rf_gain", "Device gain", self.hasAgc()),
             NumberInput(
                 "ppm",
@@ -860,6 +873,7 @@ class SdrDeviceDescription(object):
             "rig_enabled",
             "key_locked",
             "restricted",
+            "disabled",
         ]
         if self.supportsPpm():
             keys += ["ppm"]

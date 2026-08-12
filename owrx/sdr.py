@@ -282,6 +282,9 @@ class SdrService(object):
         for s_id, source in SdrService.getAllSources().items():
             if source.isEnabled() and not source.isFailed():
                 for p_id, profile in source.getProfiles().items():
+                    # Disabled profiles are hidden from everyone, magic key or not
+                    if "disabled" in profile and profile["disabled"]:
+                        continue
                     # Check if profile is restricted (hidden from users without magic_key)
                     profile_restricted = "restricted" in profile and profile["restricted"]
                     result["{}|{}".format(s_id, p_id)] = {
