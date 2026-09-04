@@ -15,6 +15,9 @@ logger = logging.getLogger(__name__)
 # Persistent chat history file
 CHAT_HISTORY_FILE = "/var/lib/openwebrx/chat_history.json"
 
+# Unbegrenztes Text-Log aller Chat-Nachrichten (append-only, zum Nachlesen)
+CHAT_LOG_FILE = "/var/lib/openwebrx/chat_log.txt"
+
 
 class TooManyClientsException(Exception):
     pass
@@ -42,7 +45,7 @@ class ClientRegistry(object):
         self.chatCount = 1
         self.chatColors = ColorCache()
         self.chatLock = threading.Lock()
-        self.chatHistoryMax = 50  # Max. Anzahl gespeicherter Nachrichten
+        self.chatHistoryMax = 100  # Max. Anzahl gespeicherter Nachrichten
         self.chatHistory = self._loadChatHistory()  # Load from disk
         Config.get().wireProperty("max_clients", self._checkClientCount)
         super().__init__()
@@ -66,6 +69,16 @@ class ClientRegistry(object):
                 json.dump(self.chatHistory, f)
         except Exception as e:
             logger.warning("Could not save chat history: %s", e)
+
+    def _appendChatLog(self, name, text):
+        """Append message to the unlimited plain-text chat log"""
+        try:
+            with open(CHAT_LOG_FILE, 'a') as f:
+                f.write("%s <%s> %s\n" % (
+                    datetime.now().strftime("%Y-%m-%d %H:%M:%S"), name, text
+                ))
+        except Exception as e:
+            logger.warning("Could not write chat log: %s", e)
 
     def broadcast(self):
         n = self.clientCount()
@@ -282,6 +295,7 @@ class ClientRegistry(object):
             self.chatHistory = self.chatHistory[-self.chatHistoryMax:]
         # Save to disk
         self._saveChatHistory()
+        self._appendChatLog(name, text)
 
         # Broadcast message to all clients
         for c in self.clients:
@@ -294,6 +308,7 @@ class ClientRegistry(object):
     def relayChatMessage(self, name: str, text: str):
         for c in self.clients:
             c.write_chat_message(name, text, "#ccc")
+        self._appendChatLog(name, text)
 
     # Get chat history for new clients.
     def getChatHistory(self):
