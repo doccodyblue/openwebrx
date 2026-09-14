@@ -314,12 +314,19 @@ class WsjtParser(AudioChopperParser):
                 Map.getSharedInstance().updateLocation(
                     out["callsign"], LocatorLocation(out["locator"]), mode, band
                 )
-                ReportingEngine.getSharedInstance().spot(out)
             # currently not reporting calls, not to confuse PSKReporter
             if "callsign" in out and "callee" in out:
                 Map.getSharedInstance().updateCall(
                     out["callsign"], out["callee"], mode, band
                 )
+            # Report every decode, not just the ones carrying a locator. Only
+            # CQ and grid replies contain a maidenhead square; reports like
+            # "R-13" or "RR73" do not, and used to be dropped here. They are
+            # perfectly good reception evidence: PskReporter already has a path
+            # for records without a locator, and MQTT consumers can resolve the
+            # position from a callsign seen earlier.
+            if "callsign" in out:
+                ReportingEngine.getSharedInstance().spot(out)
 
             return out
         except Exception:
