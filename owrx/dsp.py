@@ -6,7 +6,7 @@ from owrx.rigcontrol import RigControl
 from csdr.chain import Chain
 from csdr.chain.demodulator import BaseDemodulatorChain, FixedIfSampleRateChain, FixedAudioRateChain, HdAudio, \
     SecondaryDemodulator, DialFrequencyReceiver, MetaProvider, SlotFilterChain, SecondarySelectorChain, \
-    DeemphasisTauChain, DemodulatorError, RdsChain, AudioServiceSelector
+    DeemphasisTauChain, DemodulatorError, RdsChain, AudioServiceSelector, PreAgcNotchChain
 from csdr.chain.selector import Selector, SecondarySelector
 from csdr.chain.clientaudio import ClientAudioChain
 from csdr.chain.fft import FftChain
@@ -56,6 +56,10 @@ class ClientDemodulatorChain(Chain):
         self.nbEnabled = nbEnabled and _HAS_NB
         self.nbThreshold = nbThreshold
         self.nb = None
+        # Auto-Notch: preferably inside the demodulator in front of its AGC,
+        # otherwise in the client audio chain. Placement is decided by
+        # _applyAutoNotch() and re-evaluated on every demodulator change.
+        self.anEnabled = anEnabled
         self.secondaryDspEventReceiver = secondaryDspEventReceiver
         self.selector = Selector(sampleRate, outputRate)
         self.selectorBuffer = Buffer(Format.COMPLEX_FLOAT)
@@ -68,7 +72,7 @@ class ClientDemodulatorChain(Chain):
         self.rdsRbds = False
         inputRate = demod.getFixedAudioRate() if isinstance(demod, FixedAudioRateChain) else outputRate
         oRate = hdOutputRate if isinstance(demod, HdAudio) else outputRate
-        self.clientAudioChain = ClientAudioChain(demod.getOutputFormat(), inputRate, oRate, audioCompression, nrEnabled, nrThreshold, anEnabled, rnnEnabled, rnnMix, rnnGate)
+        self.clientAudioChain = ClientAudioChain(demod.getOutputFormat(), inputRate, oRate, audioCompression, nrEnabled, nrThreshold, False, rnnEnabled, rnnMix, rnnGate)
         self.secondaryFftSize = 2048
         self.secondaryFftOverlapFactor = 0.3
         self.secondaryFftFps = 9
@@ -86,6 +90,7 @@ class ClientDemodulatorChain(Chain):
             workers.append(self.nb)
         workers += [self.demodulator, self.clientAudioChain]
         super().__init__(workers)
+        self._applyAutoNotch()
 
     def _buildNb(self):
         # threshold is a linear factor above the running average IQ magnitude
@@ -109,6 +114,29 @@ class ClientDemodulatorChain(Chain):
             self.remove(1)
             self.nbEnabled = False
             self.nb = None
+
+    def _applyAutoNotch(self) -> None:
+        # Pre-AGC placement only while no digital decoder taps the demodulator
+        # output: secondary demodulators with audio input (FT8, RTTY, ...) read
+        # the audio buffer behind the AGC, and an adaptive notch would eat
+        # exactly their steady tones. In that case the notch falls back to the
+        # client audio chain, where it only affects what the listener hears.
+        decoderOnAudio = (
+            self.secondaryDemodulator is not None
+            and self.secondaryDemodulator.getInputFormat() is not Format.COMPLEX_FLOAT
+        )
+        preAgc = (
+            self.anEnabled
+            and isinstance(self.demodulator, PreAgcNotchChain)
+            and not decoderOnAudio
+        )
+        if isinstance(self.demodulator, PreAgcNotchChain):
+            self.demodulator.setPreAgcNotch(preAgc)
+        self.clientAudioChain.setAnEnabled(self.anEnabled and not preAgc)
+        logger.debug(
+            "auto-notch placement: %s",
+            "pre-agc" if preAgc else ("client audio" if self.anEnabled else "off"),
+        )
 
     def setNbThreshold(self, nbThreshold: int) -> None:
         if nbThreshold == self.nbThreshold:
@@ -186,6 +214,7 @@ class ClientDemodulatorChain(Chain):
             demodulator.setMetaWriter(self.metaWriter)
 
         self.replace(self._demodIndex(), demodulator)
+        self._applyAutoNotch()
 
         self.clientAudioChain.setInputRate(clientRate)
         outputRate = self.hdOutputRate if isinstance(self.demodulator, HdAudio) else self.outputRate
@@ -219,6 +248,7 @@ class ClientDemodulatorChain(Chain):
         self.demodulator = None
 
         self.setSecondaryDemodulator(None)
+        self._applyAutoNotch()
 
     def _getSelectorOutputRate(self):
         if isinstance(self.demodulator, FixedIfSampleRateChain):
@@ -278,6 +308,8 @@ class ClientDemodulatorChain(Chain):
             else:
                 self.secondaryDemodulator.setReader(self.audioBuffer.getReader())
             self.secondaryDemodulator.setWriter(self.secondaryWriter)
+
+        self._applyAutoNotch()
 
         if (self.secondaryDemodulator is None or not self.secondaryDemodulator.isSecondaryFftShown()) and self.secondaryFftChain is not None:
             self.secondaryFftChain.stop()
@@ -346,7 +378,10 @@ class ClientDemodulatorChain(Chain):
         self.clientAudioChain.setNrThreshold(nrThreshold)
 
     def setAnEnabled(self, anEnabled: bool) -> None:
-        self.clientAudioChain.setAnEnabled(anEnabled)
+        if anEnabled == self.anEnabled:
+            return
+        self.anEnabled = anEnabled
+        self._applyAutoNotch()
 
     def setRnnEnabled(self, rnnEnabled: bool) -> None:
         self.clientAudioChain.setRnnEnabled(rnnEnabled)

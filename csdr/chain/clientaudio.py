@@ -4,6 +4,10 @@ from pycsdr.types import Format
 
 # Custom DSP modules (AutoNotch = LMS notch against carriers/heterodynes,
 # RNNoise = neural speech denoiser). Only present in our rebuilt pycsdr;
+# Note: the AutoNotch here is the *fallback* placement (FM modes, or while a
+# digital decoder reads the demodulator output). For SSB/AM/SAM without a
+# decoder, ClientDemodulatorChain puts it inside the demodulator in front of
+# the AGC instead (PreAgcNotchChain).
 # guard the imports so the fork still runs on stock pycsdr, where these
 # features simply stay unavailable instead of breaking the audio chain.
 try:

@@ -1,5 +1,5 @@
 from csdr.chain.demodulator import BaseDemodulatorChain, FixedIfSampleRateChain, HdAudio, \
-    FixedAudioRateChain, DeemphasisTauChain, MetaProvider, RdsChain
+    FixedAudioRateChain, DeemphasisTauChain, MetaProvider, RdsChain, PreAgcNotchChain
 from pycsdr.modules import AmDemod, DcBlock, FmDemod, Limit, NfmDeemphasis, Agc, Afc, \
     WfmDeemphasis, FractionalDecimator, RealPart, Writer, Buffer
 from pycsdr.types import Format, AgcProfile
@@ -28,7 +28,7 @@ for _profile, (_attack, _decay, _hang) in _AGC_TUNING.items():
     _profile.attack, _profile.decay, _profile.hangTime = _attack, _decay, _hang
 
 
-class Am(BaseDemodulatorChain):
+class Am(BaseDemodulatorChain, PreAgcNotchChain):
     def __init__(self, agcProfile: AgcProfile = AgcProfile.SLOW):
         agc = Agc(Format.FLOAT)
         agc.setProfile(agcProfile)
@@ -126,7 +126,7 @@ class WFm(BaseDemodulatorChain, FixedIfSampleRateChain, DeemphasisTauChain, HdAu
             self.metaChain.setWriter(self.metaWriter)
 
 
-class Ssb(BaseDemodulatorChain):
+class Ssb(BaseDemodulatorChain, PreAgcNotchChain):
     def __init__(self, agcProfile: AgcProfile = AgcProfile.FAST):
         agc = Agc(Format.FLOAT)
         agc.setProfile(agcProfile)
@@ -148,7 +148,7 @@ class Empty(BaseDemodulatorChain):
         pass
 
 
-class SAm(BaseDemodulatorChain):
+class SAm(BaseDemodulatorChain, PreAgcNotchChain):
     def __init__(self, sampleRate: int, agcProfile: AgcProfile = AgcProfile.SLOW):
         agc = Agc(Format.FLOAT)
         agc.setProfile(agcProfile)
