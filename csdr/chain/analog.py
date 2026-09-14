@@ -8,6 +8,26 @@ from typing import Optional
 from owrx.feature import FeatureDetector
 
 
+# DG7LAN: AGC-Profile nachschärfen. Die Attack-Raten aus pycsdr/types.py
+# (0.005 Slow … 0.01 Fast, pro Sample) sind bei 12 kHz Audio viel zu träge:
+# 20 dB wegregeln dauert 19–38 ms, der 100-Sample-Lookahead (8 ms) der csdr-AGC
+# fängt davon nur 4–9 dB ab -> hörbares Clipping bei jedem lauten Einsatz, auch
+# im Profil "Slow". Attack 0.1 (= csdr-C++-Default) regelt 20 dB in <2 ms weg,
+# komplett innerhalb des Lookaheads. Decay und Hang-Time bleiben profilabhängig,
+# "Slow" bleibt also slow. Der Override sitzt hier statt in pycsdr/types.py,
+# damit ihn ein pycsdr-Rebuild (buildall.sh / dpkg -i) nicht wieder frisst —
+# genau so ging der types.py-Patch vom 2026-05-15 am 2026-08-06 verloren.
+_AGC_TUNING = {
+    #                 attack  decay    hangTime (Samples)
+    AgcProfile.SLOW: (0.1,    0.0001,  600),
+    AgcProfile.LAG:  (0.1,    0.00025, 550),
+    AgcProfile.MID:  (0.1,    0.00045, 300),
+    AgcProfile.FAST: (0.1,    0.001,   200),
+}
+for _profile, (_attack, _decay, _hang) in _AGC_TUNING.items():
+    _profile.attack, _profile.decay, _profile.hangTime = _attack, _decay, _hang
+
+
 class Am(BaseDemodulatorChain):
     def __init__(self, agcProfile: AgcProfile = AgcProfile.SLOW):
         agc = Agc(Format.FLOAT)
