@@ -32,6 +32,7 @@ Chat.sendNicknameToServer = function() {
 // Weak-quality nickname rule, mirrored server-side (owrx/client.py):
 // - at least 4 characters with a digit (every callsign passes naturally), OR
 // - at least 6 letters for real names without digits ("Seefunker"),
+// - always at least one letter (rejects numeric junk like "12121"),
 // - and never a generic placeholder ("Anonym", "Gast", ...).
 Chat.genericNicknames = ['anonym', 'anonymous', 'gast', 'guest', 'user', 'test',
     'tester', 'admin', 'unknown', 'nobody', 'niemand', 'keiner', 'name',
@@ -41,6 +42,7 @@ Chat.isValidNickname = function(name) {
     name = name.trim();
     if (name.length < 4) return false;
     if (this.genericNicknames.indexOf(name.toLowerCase()) >= 0) return false;
+    if (!/\p{L}/u.test(name)) return false;
     return /\d/.test(name) || name.length >= 6;
 };
 

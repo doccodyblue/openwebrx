@@ -204,6 +204,7 @@ class ClientRegistry(object):
     # - at least 4 characters with a digit (every amateur/SWL callsign
     #   qualifies naturally), OR
     # - at least 6 letters for real names without digits ("Seefunker"),
+    # - always at least one letter (rejects numeric junk like "12121"),
     # - and never a generic placeholder ("Anonym", "Gast", ...).
     # Enforced server-side so it cannot be bypassed by talking to the
     # WebSocket directly.
@@ -212,6 +213,11 @@ class ClientRegistry(object):
         if name is None or len(name) < 4:
             return False
         if name.lower() in ClientRegistry.GENERIC_NICKNAMES:
+            return False
+        # Every real callsign or name contains a letter. Without this check,
+        # purely numeric junk like "12121" or "6789" slipped through the
+        # digit branch, which was only meant to let short callsigns pass.
+        if not any(c.isalpha() for c in name):
             return False
         return any(c.isdigit() for c in name) or len(name) >= 6
 
