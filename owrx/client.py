@@ -281,21 +281,7 @@ class ClientRegistry(object):
                 self.chat[client] = { "name": name, "color": color }
                 self.chatCount = self.chatCount + 1
 
-        # Speichere Nachricht in History (mit Timestamp)
-        import time
-        historyEntry = {
-            "name": name,
-            "text": text,
-            "color": color,
-            "timestamp": int(time.time() * 1000)
-        }
-        self.chatHistory.append(historyEntry)
-        # Ring-Buffer: älteste Nachrichten entfernen wenn voll
-        if len(self.chatHistory) > self.chatHistoryMax:
-            self.chatHistory = self.chatHistory[-self.chatHistoryMax:]
-        # Save to disk
-        self._saveChatHistory()
-        self._appendChatLog(name, text)
+        self._appendChatHistory(name, text, color)
 
         # Broadcast message to all clients
         for c in self.clients:
@@ -304,11 +290,30 @@ class ClientRegistry(object):
         # Report message
         self.reportChatMessage(client, text)
 
+    # Store a chat message in the history (ring buffer), persist it and
+    # append it to the unlimited text log
+    def _appendChatHistory(self, name: str, text: str, color: str):
+        import time
+        with self.chatLock:
+            self.chatHistory.append({
+                "name": name,
+                "text": text,
+                "color": color,
+                "timestamp": int(time.time() * 1000)
+            })
+            # Ring-Buffer: älteste Nachrichten entfernen wenn voll
+            if len(self.chatHistory) > self.chatHistoryMax:
+                self.chatHistory = self.chatHistory[-self.chatHistoryMax:]
+            self._saveChatHistory()
+        self._appendChatLog(name, text)
+
     # Relay external chat message to all connected clients.
+    # Relayed messages (e.g. from the other receiver via MQTT) go into the
+    # history too, otherwise only the local half of a conversation survives.
     def relayChatMessage(self, name: str, text: str):
+        self._appendChatHistory(name, text, "#ccc")
         for c in self.clients:
             c.write_chat_message(name, text, "#ccc")
-        self._appendChatLog(name, text)
 
     # Get chat history for new clients.
     def getChatHistory(self):
