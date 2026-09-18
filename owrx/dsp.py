@@ -645,6 +645,7 @@ class DspManager(SdrSourceEventClient, ClientDemodulatorSecondaryDspEventClient)
 
         self.readers = {}
 
+        mode = None
         if "start_mod" in self.props:
             mode = Modes.findByModulation(self.props["start_mod"])
             if mode:
@@ -768,6 +769,9 @@ class DspManager(SdrSourceEventClient, ClientDemodulatorSecondaryDspEventClient)
         elif demod == "nxdn":
             from csdr.chain.digiham import Nxdn
             return Nxdn(self.props["digital_voice_codecserver"])
+        elif demod == "p25":
+            from csdr.chain.digiham import P25
+            return P25(self.props["digital_voice_codecserver"])
         elif demod == "tetra":
             from csdr.chain.tetra import Tetra
             return Tetra()
@@ -911,6 +915,9 @@ class DspManager(SdrSourceEventClient, ClientDemodulatorSecondaryDspEventClient)
             # WMBus likes 1.2Msps, which does not work for other ISM
             from csdr.chain.toolbox import IsmDemodulator
             return IsmDemodulator(1200000)
+        elif mod == "speech":
+            from csdr.chain.toolbox import AudioTranscriber
+            return AudioTranscriber()
         elif mod == "hfdl":
             from csdr.chain.aircraft import HfdlDemodulator
             return HfdlDemodulator()

@@ -1,7 +1,7 @@
 from distutils.version import LooseVersion
 
 # Base version from upstream OpenWebRX+
-_upstream_version = "1.2.118"
+_upstream_version = "1.2.124"
 # Fork identifier
 _fork_suffix = "-DG7LAN"
 
