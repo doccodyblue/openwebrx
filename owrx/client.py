@@ -2,7 +2,7 @@ from owrx.config import Config
 from owrx.config.core import CoreConfig
 from owrx.color import ColorCache
 from datetime import datetime, timedelta
-from ipaddress import ip_address
+from ipaddress import ip_address, ip_network
 from http.cookies import SimpleCookie
 import threading
 import re
@@ -389,6 +389,33 @@ class ClientRegistry(object):
                 ip = handler.headers['x-forwarded-for'].split(',')[0]
         # Done
         return ip
+
+    # Check if the client behind given handler is exempt from the session
+    # timeout ("timeout_exempt_ips" setting: comma-separated IPs or CIDRs).
+    # Used for both the web page (meta refresh) and the websocket.
+    def isTimeoutExempt(self, handler):
+        try:
+            pm = Config.get()
+            exempt = pm["timeout_exempt_ips"] if "timeout_exempt_ips" in pm else ""
+            if not exempt:
+                return False
+            addr = ip_address(self.getIp(handler).strip())
+        except ValueError:
+            # Garbage in a client-supplied X-Forwarded-For header
+            return False
+        except Exception as e:
+            logger.warning("Cannot check session timeout exemption: %s", e)
+            return False
+        for entry in exempt.split(","):
+            entry = entry.strip()
+            if not entry:
+                continue
+            try:
+                if addr in ip_network(entry, strict=False):
+                    return True
+            except ValueError:
+                logger.warning("Invalid IP/CIDR in timeout_exempt_ips: %s", entry)
+        return False
 
     # List all active and banned clients.
     def listAll(self):

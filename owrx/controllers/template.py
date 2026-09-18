@@ -15,8 +15,8 @@ class TemplateController(Controller):
 
         return template.safe_substitute(**vars)
 
-    def serve_template(self, file, **vars):
-        self.send_response(self.render_template(file, **vars), content_type="text/html")
+    def serve_template(self, file, headers=None, **vars):
+        self.send_response(self.render_template(file, **vars), content_type="text/html", headers=headers)
 
     def default_variables(self):
         return {}
@@ -31,6 +31,10 @@ class WebpageController(TemplateController):
     def header_variables(self):
         variables = { "document_root": self.get_document_root(), "map_type": "" }
         variables.update(ReceiverDetails().__dict__())
+        # The session timeout is a meta refresh rendered into the page header,
+        # so clients exempt from it must get the page without that refresh.
+        if ClientRegistry.getSharedInstance().isTimeoutExempt(self.handler):
+            variables["session_timeout"] = 0
         return variables
 
     def template_variables(self):
@@ -71,7 +75,9 @@ class IndexController(WebpageController):
             cookie["max-age"] = 10 * 365 * 24 * 3600
             cookie["samesite"] = "Lax"
             cookie["httponly"] = True
-        self.serve_template("index.html", **self.template_variables())
+        # The page differs per client (session timeout exemption), keep it
+        # out of shared caches such as Varnish.
+        self.serve_template("index.html", headers={"Cache-Control": "no-cache, private"}, **self.template_variables())
 
 
 class MapController(WebpageController):
