@@ -112,6 +112,7 @@ class FeatureDetector(object):
         "hdradio": ["nrsc5"],
         "rigcontrol": ["hamlib"],
         "skimmer": ["csdr_skimmer"],
+        "sonde": ["sonde_rs"],
         "mp3": ["lame"],
         "lora": ["lorarx"],
         "meshtastic": ["lorarx", "py_meshtastic"],
