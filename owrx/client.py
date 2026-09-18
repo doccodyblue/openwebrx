@@ -3,6 +3,7 @@ from owrx.config.core import CoreConfig
 from owrx.color import ColorCache
 from datetime import datetime, timedelta
 from ipaddress import ip_address
+from http.cookies import SimpleCookie
 import threading
 import re
 import json
@@ -17,6 +18,10 @@ CHAT_HISTORY_FILE = "/var/lib/openwebrx/chat_history.json"
 
 # Unbegrenztes Text-Log aller Chat-Nachrichten (append-only, zum Nachlesen)
 CHAT_LOG_FILE = "/var/lib/openwebrx/chat_log.txt"
+# Persistent ban list (IPs plus per-browser cookie tokens), survives restarts
+BANS_FILE = "/var/lib/openwebrx/bans.json"
+# Cookie carrying the per-browser client token (set by IndexController)
+CLIENT_TOKEN_COOKIE = "owrx_cid"
 
 
 class TooManyClientsException(Exception):
@@ -40,7 +45,7 @@ class ClientRegistry(object):
 
     def __init__(self):
         self.clients = []
-        self.bans = {}
+        self.bans = self._loadBans()
         self.chat = {}
         self.chatCount = 1
         self.chatColors = ColorCache()
@@ -208,11 +213,36 @@ class ClientRegistry(object):
     # - and never a generic placeholder ("Anonym", "Gast", ...).
     # Enforced server-side so it cannot be bypassed by talking to the
     # WebSocket directly.
+    # Placeholder names that dodge the rule above: "RegisteredUser", "user123",
+    # "TestUser", "Benutzer1", ... Checked on the letters only, so digits and
+    # underscores do not help. Real names ending in "user" (Hauser, Mauser)
+    # stay allowed because their prefix is not a generic word.
+    PLACEHOLDER_SUBSTRINGS = ("registered", "registriert", "anonym")
+    PLACEHOLDER_SUFFIXES = ("benutzer", "nutzer", "user")
+    PLACEHOLDER_PREFIXES = {
+        "", "new", "neuer", "neue", "guest", "gast", "test", "some", "random",
+        "web", "sdr", "radio", "funk", "owrx", "openwebrx", "chat", "unknown",
+        "default", "temp", "just", "a", "the", "ein", "der", "die", "normal",
+        "normaler", "regular", "simple", "einfacher", "standard", "basic",
+    }
+
+    @staticmethod
+    def isPlaceholderNickname(name: str) -> bool:
+        letters = re.sub(r"[^a-z]", "", name.lower())
+        if letters in ClientRegistry.GENERIC_NICKNAMES:
+            return True
+        if any(s in letters for s in ClientRegistry.PLACEHOLDER_SUBSTRINGS):
+            return True
+        for suffix in ClientRegistry.PLACEHOLDER_SUFFIXES:
+            if letters.endswith(suffix) and letters[:-len(suffix)] in ClientRegistry.PLACEHOLDER_PREFIXES:
+                return True
+        return False
+
     @staticmethod
     def isValidNickname(name: str) -> bool:
         if name is None or len(name) < 4:
             return False
-        if name.lower() in ClientRegistry.GENERIC_NICKNAMES:
+        if name.lower() in ClientRegistry.GENERIC_NICKNAMES or ClientRegistry.isPlaceholderNickname(name):
             return False
         # Every real callsign or name contains a letter. Without this check,
         # purely numeric junk like "12121" or "6789" slipped through the
@@ -379,46 +409,128 @@ class ClientRegistry(object):
         # Flush out stale bans
         self.expireBans()
         # List banned clients
-        for ip in self.bans:
+        for ip, ban in self.bans.items():
             result.append({
-                "ts"  : self.bans[ip],
-                "ip"  : ip,
-                "ban" : True
+                "ts"     : ban["until"],   # None = permanent
+                "ip"     : ip,
+                "ban"    : True,
+                "tokens" : len(ban["tokens"])
             })
         # Done
         return result
 
-    # Ban a client for given number of minutes.
-    def banClient(self, client, minutes: int):
-        self.banIp(self.getIp(client.conn.handler), minutes)
+    # --- Bans: by IP and by per-browser cookie token, persisted in BANS_FILE ---
 
-    # Ban a client, by IP, for given number of minutes.
-    def banIp(self, ip: str, minutes: int):
+    @staticmethod
+    def getToken(handler):
+        """Per-browser client token from the cookie, or None if absent/invalid."""
+        try:
+            if hasattr(handler, "headers"):
+                cookies = SimpleCookie(handler.headers.get("Cookie", ""))
+                if CLIENT_TOKEN_COOKIE in cookies:
+                    token = cookies[CLIENT_TOKEN_COOKIE].value
+                    if re.fullmatch(r"[0-9a-f]{32}", token):
+                        return token
+        except Exception:
+            pass
+        return None
+
+    @staticmethod
+    def _parseBans(data):
+        bans = {}
+        for ip, entry in data.items():
+            until = entry.get("until")
+            bans[ip] = {
+                "until": datetime.fromisoformat(until) if until else None,
+                "tokens": [t for t in entry.get("tokens", []) if isinstance(t, str)],
+            }
+        return bans
+
+    @staticmethod
+    def _serializeBans(bans):
+        return {
+            ip: {"until": b["until"].isoformat() if b["until"] else None, "tokens": b["tokens"]}
+            for ip, b in bans.items()
+        }
+
+    def _loadBans(self):
+        try:
+            if os.path.exists(BANS_FILE):
+                with open(BANS_FILE, "r") as f:
+                    bans = self._parseBans(json.load(f))
+                logger.info("Loaded %d bans from disk", len(bans))
+                return bans
+        except Exception as e:
+            logger.error("Failed to load bans from %s: %s", BANS_FILE, e)
+        return {}
+
+    def _saveBans(self):
+        try:
+            tmp = BANS_FILE + ".tmp"
+            with open(tmp, "w") as f:
+                json.dump(self._serializeBans(self.bans), f, indent=2)
+            os.replace(tmp, BANS_FILE)
+        except Exception as e:
+            logger.error("Failed to save bans to %s: %s", BANS_FILE, e)
+
+    # Ban a client for given number of minutes (0 = permanent).
+    def banClient(self, client, minutes: int):
+        self.banIp(self.getIp(client.conn.handler), minutes, self.getToken(client.conn.handler))
+
+    # Ban an IP for given number of minutes (0 = permanent). Cookie tokens
+    # of clients currently connected from that IP are recorded too, so the
+    # ban sticks to the browser even when the address changes.
+    def banIp(self, ip: str, minutes: int, token: str = None):
         self.expireBans()
-        self.bans[ip] = datetime.now() + timedelta(minutes=minutes)
+        ban = self.bans.get(ip, {"until": None, "tokens": []})
+        ban["until"] = None if minutes <= 0 else datetime.now() + timedelta(minutes=minutes)
         banned = []
         for c in self.clients:
             if ip == self.getIp(c.conn.handler):
                 banned.append(c)
+                t = self.getToken(c.conn.handler)
+                if t and t not in ban["tokens"]:
+                    ban["tokens"].append(t)
+        if token and token not in ban["tokens"]:
+            ban["tokens"].append(token)
+        self.bans[ip] = ban
+        self._saveBans()
         for c in banned:
             try:
                 c.close()
             except:
                 logger.exception("exception while banning %s" % ip)
 
-    # Unban a client, by IP.
+    # Unban a client, by IP (drops the attached tokens as well).
     def unbanIp(self, ip: str):
         if ip in self.bans:
             del self.bans[ip]
+            self._saveBans()
 
-    # Check if given IP is banned at the moment.
+    # Check if the connecting client is banned, by IP or by cookie token.
+    # A token seen from a banned IP gets attached to that ban (sticky).
     def isBanned(self, handler):
+        self.expireBans()
         ip = self.getIp(handler)
-        return ip in self.bans and datetime.now() < self.bans[ip]
+        token = self.getToken(handler)
+        if ip in self.bans:
+            if token and token not in self.bans[ip]["tokens"]:
+                self.bans[ip]["tokens"].append(token)
+                self._saveBans()
+                logger.info("ban on %s now also covers client token %s...", ip, token[:8])
+            return True
+        if token:
+            for bip, ban in self.bans.items():
+                if token in ban["tokens"]:
+                    logger.info("client token %s... from %s matches ban on %s", token[:8], ip, bip)
+                    return True
+        return False
 
-    # Delete all expired bans.
+    # Delete all expired bans (permanent bans have until=None).
     def expireBans(self):
         now = datetime.now()
-        old = [ip for ip in self.bans if now >= self.bans[ip]]
+        old = [ip for ip, b in self.bans.items() if b["until"] is not None and now >= b["until"]]
         for ip in old:
             del self.bans[ip]
+        if old:
+            self._saveBans()

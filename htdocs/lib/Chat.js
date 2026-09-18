@@ -33,15 +33,36 @@ Chat.sendNicknameToServer = function() {
 // - at least 4 characters with a digit (every callsign passes naturally), OR
 // - at least 6 letters for real names without digits ("Seefunker"),
 // - always at least one letter (rejects numeric junk like "12121"),
-// - and never a generic placeholder ("Anonym", "Gast", ...).
+// - never a generic placeholder ("Anonym", "Gast", ...), also not with digits
+//   or as "RegisteredUser" / "user123" / "TestUser" / "Benutzer1" style names.
 Chat.genericNicknames = ['anonym', 'anonymous', 'gast', 'guest', 'user', 'test',
     'tester', 'admin', 'unknown', 'nobody', 'niemand', 'keiner', 'name',
     'nickname', 'rufzeichen', 'callsign'];
+Chat.placeholderSubstrings = ['registered', 'registriert', 'anonym'];
+Chat.placeholderSuffixes = ['benutzer', 'nutzer', 'user'];
+Chat.placeholderPrefixes = ['', 'new', 'neuer', 'neue', 'guest', 'gast', 'test', 'some', 'random',
+    'web', 'sdr', 'radio', 'funk', 'owrx', 'openwebrx', 'chat', 'unknown', 'default', 'temp',
+    'just', 'a', 'the', 'ein', 'der', 'die', 'normal', 'normaler', 'regular', 'simple',
+    'einfacher', 'standard', 'basic'];
+Chat.isPlaceholderNickname = function(name) {
+    var letters = name.toLowerCase().replace(/[^a-z]/g, '');
+    if (this.genericNicknames.indexOf(letters) >= 0) return true;
+    for (var i = 0; i < this.placeholderSubstrings.length; i++) {
+        if (letters.indexOf(this.placeholderSubstrings[i]) >= 0) return true;
+    }
+    for (var j = 0; j < this.placeholderSuffixes.length; j++) {
+        var s = this.placeholderSuffixes[j];
+        if (letters.length >= s.length && letters.slice(-s.length) === s &&
+            this.placeholderPrefixes.indexOf(letters.slice(0, letters.length - s.length)) >= 0) return true;
+    }
+    return false;
+};
 Chat.isValidNickname = function(name) {
     if (typeof name !== 'string') return false;
     name = name.trim();
     if (name.length < 4) return false;
     if (this.genericNicknames.indexOf(name.toLowerCase()) >= 0) return false;
+    if (this.isPlaceholderNickname(name)) return false;
     if (!/\p{L}/u.test(name)) return false;
     return /\d/.test(name) || name.length >= 6;
 };

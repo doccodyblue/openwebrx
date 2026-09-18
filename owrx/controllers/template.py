@@ -1,8 +1,11 @@
 from owrx.controllers import Controller
 from owrx.details import ReceiverDetails
 from owrx.config import Config
+from owrx.client import ClientRegistry, CLIENT_TOKEN_COOKIE
 from string import Template
+from http.cookies import SimpleCookie
 import importlib.resources
+import secrets
 
 
 class TemplateController(Controller):
@@ -57,6 +60,17 @@ class IndexController(WebpageController):
         return variables
 
     def indexAction(self):
+        # Give every browser a persistent client token (cookie). Bans can be
+        # attached to it, so a banned visitor stays banned when the address
+        # changes, until the cookie is cleared.
+        if ClientRegistry.getToken(self.handler) is None:
+            self.responseCookies = SimpleCookie()
+            self.responseCookies[CLIENT_TOKEN_COOKIE] = secrets.token_hex(16)
+            cookie = self.responseCookies[CLIENT_TOKEN_COOKIE]
+            cookie["path"] = "/"
+            cookie["max-age"] = 10 * 365 * 24 * 3600
+            cookie["samesite"] = "Lax"
+            cookie["httponly"] = True
         self.serve_template("index.html", **self.template_variables())
 
 

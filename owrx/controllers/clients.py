@@ -46,6 +46,9 @@ class ClientController(AuthorizationMixin, WebpageController):
                                 <option value="360">6 hours</option>
                                 <option value="720">12 hours</option>
                                 <option value="1440">1 day</option>
+                                <option value="10080">1 week</option>
+                                <option value="43200">30 days</option>
+                                <option value="0">permanent</option>
                             </select>
                         </td>
                     </tr>
@@ -56,12 +59,18 @@ class ClientController(AuthorizationMixin, WebpageController):
 
     @staticmethod
     def renderClient(c):
-        return "<tr><td>{0}</td><td>{1}</td><td>{2}</td><td>{3} {4}</td><td>{5}</td></tr>".format(
+        if c["ban"]:
+            tokens = c.get("tokens", 0)
+            status = "banned" + (" (+{0} cookie{1})".format(tokens, "" if tokens == 1 else "s") if tokens else "")
+            when = "permanent" if c["ts"] is None else "until " + c["ts"].strftime("%d.%m. %H:%M")
+        else:
+            status = c["sdr"] + " " + c["band"] if "sdr" in c else "n/a"
+            when = "since " + c["ts"].strftime("%H:%M:%S")
+        return "<tr><td>{0}</td><td>{1}</td><td>{2}</td><td>{3}</td><td>{4}</td></tr>".format(
             ClientController.renderIp(c["ip"]),
             c["name"] if "name" in c else "",
-            "banned" if c["ban"] else c["sdr"] + " " + c["band"] if "sdr" in c else "n/a",
-            "until" if c["ban"] else "since",
-            c["ts"].strftime("%H:%M:%S"),
+            status,
+            when,
             ClientController.renderButtons(c)
         )
 
@@ -84,8 +93,8 @@ class ClientController(AuthorizationMixin, WebpageController):
         try:
             data = json.loads(self.get_body().decode("utf-8"))
             mins = int(data["mins"]) if "mins" in data else 0
-            if "ip" in data and mins > 0:
-                logger.info("Banning {0} for {1} minutes".format(data["ip"], mins))
+            if "ip" in data and mins >= 0:
+                logger.info("Banning {0} {1}".format(data["ip"], "permanently" if mins == 0 else "for {0} minutes".format(mins)))
                 ClientRegistry.getSharedInstance().banIp(data["ip"], mins)
             self.send_response("{}", content_type="application/json", code=200)
         except Exception as e:
