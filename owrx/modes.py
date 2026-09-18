@@ -149,6 +149,7 @@ class Modes(object):
         ),
         AnalogMode("nxdn", "NXDN", bandpass=Bandpass(-3250, 3250), requirements=["digital_voice_digiham"], squelch=False),
         AnalogMode("ysf", "YSF", bandpass=Bandpass(-6250, 6250), requirements=["digital_voice_digiham"], squelch=False),
+        AnalogMode("p25", "P25", bandpass=Bandpass(-6250, 6250), requirements=["digital_voice_digiham"], squelch=False),
         AnalogMode("m17", "M17", bandpass=Bandpass(-6250, 6250), requirements=["digital_voice_m17"], squelch=False),
         AnalogMode("freedv", "FreeDV", bandpass=Bandpass(300, 3000), requirements=["digital_voice_freedv"], squelch=False),
         AnalogMode("tetra", "TETRA", bandpass=Bandpass(-12500, 12500), requirements=["tetra"], squelch=False),
@@ -339,6 +340,14 @@ class Modes(object):
             squelch=False,
             secondaryFft=False
         ),
+        DigitalMode(
+            "speech",
+            "Speech Transcriber",
+            underlying=["am", "sam", "nfm", "wfm", "lsb", "usb"],
+            requirements=["speech"],
+            service=True,
+            squelch=True
+        ),
         # LoRa modes
         DigitalMode(
             "lora-wan",
@@ -404,60 +413,54 @@ class Modes(object):
         DigitalMode(
             "sonde-rs41",
             "Sonde RS41",
-            underlying=["empty"],
-            bandpass=Bandpass(-12000, 12000),
-            ifRate=48000,
-            requirements=["radiosonde"],
+            underlying=["nfm"],
+            bandpass=Bandpass(-6250, 6250),
+            requirements=["sonde"],
             service=True,
             squelch=False
         ),
         DigitalMode(
             "sonde-dfm9",
             "Sonde DFM9",
-            underlying=["empty"],
-            bandpass=Bandpass(-12000, 12000),
-            ifRate=48000,
-            requirements=["radiosonde"],
+            underlying=["nfm"],
+            bandpass=Bandpass(-6250, 6250),
+            requirements=["sonde"],
             service=True,
             squelch=False
         ),
         DigitalMode(
             "sonde-dfm17",
             "Sonde DFM17",
-            underlying=["empty"],
-            bandpass=Bandpass(-12000, 12000),
-            ifRate=48000,
-            requirements=["radiosonde"],
+            underlying=["nfm"],
+            bandpass=Bandpass(-6250, 6250),
+            requirements=["sonde"],
             service=True,
             squelch=False
         ),
         DigitalMode(
             "sonde-mts01",
             "Sonde MTS01",
-            underlying=["empty"],
-            bandpass=Bandpass(-12000, 12000),
-            ifRate=48000,
-            requirements=["radiosonde"],
+            underlying=["nfm"],
+            bandpass=Bandpass(-6250, 6250),
+            requirements=["sonde"],
             service=True,
             squelch=False
         ),
         DigitalMode(
             "sonde-m10",
             "Sonde M10",
-            underlying=["empty"],
-            bandpass=Bandpass(-25000, 25000),
-            ifRate=76800,
-            requirements=["radiosonde"],
+            underlying=["nfm"],
+            bandpass=Bandpass(-12500, 12500),
+            requirements=["sonde"],
             service=True,
             squelch=False
         ),
         DigitalMode(
             "sonde-m20",
             "Sonde M20",
-            underlying=["empty"],
-            bandpass=Bandpass(-25000, 25000),
-            ifRate=76800,
-            requirements=["radiosonde"],
+            underlying=["nfm"],
+            bandpass=Bandpass(-12500, 12500),
+            requirements=["sonde"],
             service=True,
             squelch=False
         ),

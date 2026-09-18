@@ -379,15 +379,12 @@ class ServiceHandler(SdrSourceEventClient):
         elif mod == "uat":
             from csdr.chain.aircraft import UatDemodulator
             return UatDemodulator(service=True)
-        elif mod == "rs41":
-            from csdr.chain.radiosonde import Rs41Demodulator
-            return Rs41Demodulator(service=True)
-        elif mod == "dfm":
-            from csdr.chain.radiosonde import Dfm09Demodulator
-            return Dfm09Demodulator(service=True)
         elif mod == "audio":
             from csdr.chain.toolbox import AudioRecorder
             return AudioRecorder(service=True)
+        elif mod == "speech":
+            from csdr.chain.toolbox import AudioTranscriber
+            return AudioTranscriber(service=True)
         elif mod == "cwskimmer":
             from csdr.chain.toolbox import CwSkimmerDemodulator
             return CwSkimmerDemodulator(service=True)

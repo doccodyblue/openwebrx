@@ -57,6 +57,7 @@ class FeatureDetector(object):
         "rtl_sdr_soapy": ["soapy_connector", "soapy_rtl_sdr"],
         "rtl_tcp": ["rtl_tcp_connector"],
         "sdrplay": ["soapy_connector", "soapy_sdrplay"],
+        "sxceiver": ["soapy_connector", "soapy_sx"],
         "elad": ["soapy_connector", "soapy_elad"],
         "mirics": ["soapy_connector", "soapy_mirics"],
         "malahit_rr": ["soapy_connector", "soapy_malahit_rr"],
@@ -74,6 +75,7 @@ class FeatureDetector(object):
         "radioberry": ["soapy_connector", "soapy_radioberry"],
         "fcdpp": ["soapy_connector", "soapy_fcdpp"],
         "bladerf": ["soapy_connector", "soapy_bladerf"],
+        "iqfile": ["soapy_connector", "soapy_iqfile"],
         "sddc": ["sddc_connector"],
         "sddc_soapy": ["soapy_connector", "soapy_sddc"],
         "hpsdr": ["hpsdr_connector"],
@@ -98,7 +100,6 @@ class FeatureDetector(object):
         "hfdl": ["dumphfdl"],
         "vdl2": ["dumpvdl2"],
         "acars": ["acarsdec"],
-        "radiosonde": ["rs41mod"],
         "tetra": ["tetrarx"],
         "page": ["multimon"],
         "selcall": ["multimon"],
@@ -114,6 +115,7 @@ class FeatureDetector(object):
         "mp3": ["lame"],
         "lora": ["lorarx"],
         "meshtastic": ["lorarx", "py_meshtastic"],
+        "speech": ["whisper"],
     }
 
     def feature_availability(self):
@@ -358,6 +360,16 @@ class FeatureDetector(object):
         """
         return self._has_soapy_driver("sdrplay")
 
+    def has_soapy_sx(self):
+        """
+        The [SoapySX module for SXceiver](https://github.com/tejeez/sxxcvr)
+        module is required for interfacing with OH2EAT official SXceiver and
+        other Raspberry Pi HATs (possibly other boards as well) based around
+        SX1255 IQ Transceiver IC.  You can compile them from source given, along
+        with the necessary DTOverlay module for Raspberry Pi.
+        """
+        return self._has_soapy_driver("sx")
+
     def has_soapy_elad(self):
         """
         The [SoapySDR module for ELAD](https://github.com/DisagioDigitale/SoapyELAD)
@@ -478,6 +490,15 @@ class FeatureDetector(object):
         Linux distributions.
         """
         return self._has_soapy_driver("bladerf")
+
+    def has_soapy_iqfile(self):
+        """
+        The [SoapyIQFile](https://github.com/utn-ba-rf-lab/SoapyIQFile)
+        module allows to use both normal and pipe (FIFO) files instead
+        of an antenna. Reading IQ data in CF32 format.
+        To install it, please build it using the instructions in the repo.
+        """
+        return self._has_soapy_driver("iqfile")
 
     def has_m17_demod(self):
         """
@@ -768,14 +789,6 @@ class FeatureDetector(object):
         """
         return self.command_is_runnable("dumpvdl2 --version")
 
-    def has_rs41mod(self):
-        """
-        OpenWebRX supports decoding Vaisala RS41 and Graw DFM radiosondes using
-        decoders from the [RS project](https://github.com/rs1729/RS). These decoders
-        allow tracking weather balloons and displaying them on the map.
-        """
-        return self.command_is_runnable("rs41mod --help")
-
     def has_redsea(self):
         """
         OpenWebRX uses the [RedSea](https://github.com/windytan/redsea)
@@ -956,3 +969,11 @@ class FeatureDetector(object):
         """
         return self.command_is_runnable("tetrarx -h")
 
+    def has_whisper(self):
+        """
+        OpenWebRX uses [Whisper.cpp](https://github.com/ggml-org/whisper.cpp)
+        tool to transcribe and translate speech transmissions. Configure your
+        Whisper server URL in the Settings.
+        """
+        url = Config.get()["speech_url"]
+        return url is not None and url

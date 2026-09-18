@@ -374,6 +374,7 @@ defaultConfig = PropertyLayer(
     map_prefer_recent_reports=True,
     map_ignore_indirect_reports=False,
     callsign_url="https://www.qrzcq.com/call/{}",
+    sonde_url="https://sondehub.org/{}",
     vessel_url="https://www.vesselfinder.com/vessels/details/{}",
     flight_url="https://flightaware.com/live/flight/{}",
     modes_url="https://flightaware.com/live/modes/{}/redirect",
@@ -490,5 +491,8 @@ defaultConfig = PropertyLayer(
     lorawan_bw="7",
     meshtastic_bw="8",
     meshcore_bw="6",
-    meshcom_bw="8"
+    meshcom_bw="8",
+    speech_url="",
+    speech_squelch=20,
+    speech_hang_time=5000
 ).readonly()

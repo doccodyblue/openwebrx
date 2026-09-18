@@ -1216,6 +1216,10 @@ function on_ws_recv(evt) {
                             Utils.setVesselUrl(config['vessel_url']);
                         }
 
+                        if ('sonde_url' in config) {
+                            Utils.setSondeUrl(config['sonde_url']);
+                        }
+
                         // Load user interface settings from local storage
                         UI.loadSettings();
                         Chat.loadSettings();
@@ -1379,7 +1383,7 @@ function on_ws_recv(evt) {
                         break;
                     case 'secondary_demod':
                         var value = json['value'];
-                        var panels = ['wsjt', 'packet', 'pocsag', 'page', 'sstv', 'fax', 'ism', 'hfdl', 'adsb', 'dsc', 'skimmer', 'radiosonde', 'meshtastic'].map(function(id) {
+                        var panels = ['wsjt', 'packet', 'pocsag', 'page', 'sstv', 'fax', 'ism', 'hfdl', 'adsb', 'dsc', 'skimmer', 'meshtastic'].map(function(id) {
 
                             return $('#openwebrx-panel-' + id + '-message')[id + 'MessagePanel']();
                         });

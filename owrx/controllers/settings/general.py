@@ -385,6 +385,13 @@ class GeneralSettingsController(SettingsFormController):
                     + "brackets ({}) where aircraft Mode-S code is supposed to be.",
                 ),
                 TextInput(
+                    "sonde_url",
+                    "Radiosonde database URL",
+                    infotext="Specifies radiosonde lookup URL, such as SONDEHUB.ORG, "
+                    + "allowing to look up sonde information by its ID number. "
+                    + "Place curly brackets ({}) where ID is supposed to be.",
+                ),
+                TextInput(
                     "geoip_url",
                     "IP geolocation URL",
                     infotext="Specifies IP geolocation URL, such as GEOLOCATION.COM, "

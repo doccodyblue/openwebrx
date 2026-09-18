@@ -103,7 +103,6 @@
                 <div class="openwebrx-panel openwebrx-message-panel" id="openwebrx-panel-wsjt-message" style="display: none; width: 619px;" data-panel-name="wsjt-message"></div>
                 <div class="openwebrx-panel openwebrx-message-panel" id="openwebrx-panel-js8-message" style="display:none; width: 619px;" data-panel-name="js8-message"></div>
                 <div class="openwebrx-panel openwebrx-message-panel" id="openwebrx-panel-packet-message" style="display: none; width: 619px;" data-panel-name="aprs-message"></div>
-                <div class="openwebrx-panel openwebrx-message-panel" id="openwebrx-panel-radiosonde-message" style="display: none; width: 619px;" data-panel-name="radiosonde-message"></div>
                 <div class="openwebrx-panel openwebrx-message-panel" id="openwebrx-panel-pocsag-message" style="display: none; width: 619px;" data-panel-name="pocsag-message"></div>
                 <div class="openwebrx-panel openwebrx-message-panel" id="openwebrx-panel-page-message" style="display: none; width: 619px;" data-panel-name="page-message"></div>
                 <div class="openwebrx-panel openwebrx-message-panel" id="openwebrx-panel-hfdl-message" style="display: none; width: 619px;" data-panel-name="hfdl-message"></div>
@@ -183,14 +182,25 @@
                         </div>
                     </div>
                 </div>
-                <div class="openwebrx-panel openwebrx-meta-panel disabled" id="openwebrx-panel-metadata-wfm" style="display: none;" data-panel-name="metadata-wfm"></div>
-                <div class="openwebrx-panel openwebrx-meta-panel" id="openwebrx-panel-metadata-hdr" style="display: none;" data-panel-name="metadata-hdr"></div>
-                <div class="openwebrx-panel openwebrx-meta-panel" id="openwebrx-panel-metadata-dab" style="display: none;" data-panel-name="metadata-dab"></div>
-                <div class="openwebrx-panel openwebrx-meta-panel" id="openwebrx-panel-metadata-drm" style="display: none;" data-panel-name="metadata-drm"></div>
+		<div class="openwebrx-panel openwebrx-meta-panel" id="openwebrx-panel-metadata-p25" style="display: none;" data-panel-name="metadata-p25">
+                    <div class="openwebrx-meta-slot">
+                        <div class="openwebrx-p25-encryption"></div>
+                        <div class="openwebrx-meta-user-image">
+                            <img class="directcall" src="static/gfx/openwebrx-directcall.svg">
+                            <img class="groupcall" src="static/gfx/openwebrx-groupcall.svg">
+                        </div>
+                        <div class="openwebrx-p25-source"></div>
+                        <div class="openwebrx-p25-destination"></div>
+                    </div>
+                </div>
 		<div class="openwebrx-panel openwebrx-meta-panel" id="openwebrx-panel-metadata-tetra" style="display: none;" data-panel-name="metadata-tetra">
                     <div class="openwebrx-meta-slot">
                     </div>
                 </div>
+                <div class="openwebrx-panel openwebrx-meta-panel disabled" id="openwebrx-panel-metadata-wfm" style="display: none;" data-panel-name="metadata-wfm"></div>
+                <div class="openwebrx-panel openwebrx-meta-panel" id="openwebrx-panel-metadata-hdr" style="display: none;" data-panel-name="metadata-hdr"></div>
+                <div class="openwebrx-panel openwebrx-meta-panel" id="openwebrx-panel-metadata-dab" style="display: none;" data-panel-name="metadata-dab"></div>
+                <div class="openwebrx-panel openwebrx-meta-panel" id="openwebrx-panel-metadata-drm" style="display: none;" data-panel-name="metadata-drm"></div>
                 <div class="openwebrx-panel" id="openwebrx-panel-log" data-panel-name="debug" style="width: 92%; max-width: 619px;">
                     <div style="position: relative; height: 100%">
                         <div class="openwebrx-panel-inner nano" id="openwebrx-log-scroll">
@@ -226,6 +236,7 @@
             </div>
             <div id="openwebrx-panels-container-right">
                 <div class="openwebrx-panel" id="openwebrx-panel-receiver" data-panel-name="client-params" style="width: 259px;">
+                    <div class="openwebrx-plugin-stack" id="openwebrx-panel-plugins"></div>
                     <div class="openwebrx-panel-line frequencies-container">
                         <div class="frequencies">
                             <div class="webrx-actual-freq"></div>
@@ -399,6 +410,12 @@
                             <label class="openwebrx-checkbox">
                                 <input id="openwebrx-wheel-checkbox" type="checkbox" onchange="UI.toggleWheelSwap(this.checked);" />
                                 Hold mouse wheel down to tune
+                            </label>
+                        </div>
+                        <div class="openwebrx-panel-line">
+                            <label class="openwebrx-checkbox">
+                                <input id="openwebrx-crossfreq-checkbox" type="checkbox" onchange="UI.toggleCrossFreq(this.checked);" />
+                                Show pointer frequency
                             </label>
                         </div>
                         <div class="openwebrx-panel-line">
